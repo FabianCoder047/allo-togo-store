@@ -1,4 +1,4 @@
-import { env } from './env.js'
+import { env } from "./env.js"
 
 /**
  * Origines autorisées pour HTTP et Socket.IO.
@@ -12,8 +12,11 @@ export const isAllowedOrigin = (origin: string | undefined): boolean => {
   try {
     const { protocol, hostname } = new URL(origin)
     return (
-      (protocol === 'http:' || protocol === 'https:') &&
-      (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]')
+      (protocol === "http:" || protocol === "https:") &&
+      (hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname === "::1" ||
+        hostname === "[::1]")
     )
   } catch {
     return false

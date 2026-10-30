@@ -1,16 +1,20 @@
-import { Router } from 'express'
-import { z } from 'zod'
-import { asyncHandler } from '../../lib/asyncHandler.js'
-import { forbidden, notFound } from '../../lib/errors.js'
-import { validate } from '../../middleware/validate.js'
-import { requireAuth, requirePasswordChanged, requirePermission } from '../../middleware/auth.js'
-import { prisma } from '../../db/prisma.js'
-import { realtime } from '../../realtime/events.js'
-import { listOrders } from '../orders/service.js'
+import { Router } from "express"
+import { z } from "zod"
+import { asyncHandler } from "../../lib/asyncHandler.js"
+import { forbidden, notFound } from "../../lib/errors.js"
+import { validate } from "../../middleware/validate.js"
+import {
+  requireAuth,
+  requirePasswordChanged,
+  requirePermission,
+} from "../../middleware/auth.js"
+import { prisma } from "../../db/prisma.js"
+import { realtime } from "../../realtime/events.js"
+import { listOrders } from "../orders/service.js"
 
 const missionQuerySchema = z.object({
   status: z.string().optional(),
-  categoryType: z.enum(['GPS', 'DRINK']).optional(),
+  categoryType: z.enum(["GPS", "DRINK"]).optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(50),
 })
@@ -20,11 +24,11 @@ const assistantThreadParamsSchema = z.object({
 })
 
 const assistantThreadReplySchema = z.object({
-  body: z.string().trim().min(1, 'La réponse ne peut pas être vide.').max(2000),
+  body: z.string().trim().min(1, "La réponse ne peut pas être vide.").max(2000),
 })
 
 const assistantThreadStatusSchema = z.object({
-  status: z.enum(['OPEN', 'ANSWERED', 'RESOLVED']),
+  status: z.enum(["OPEN", "ANSWERED", "RESOLVED"]),
 })
 
 const assistantThreadSelect = {
@@ -35,7 +39,7 @@ const assistantThreadSelect = {
   createdAt: true,
   updatedAt: true,
   messages: {
-    orderBy: { createdAt: 'asc' as const },
+    orderBy: { createdAt: "asc" as const },
     take: 200,
     select: {
       id: true,
@@ -48,8 +52,10 @@ const assistantThreadSelect = {
 }
 
 const ensureAssistantAccess = (role: string) => {
-  if (role !== 'DIRECTOR' && role !== 'COMMERCIAL') {
-    throw forbidden('Les alertes de l’assistant sont réservées aux comptes employés.')
+  if (role !== "DIRECTOR" && role !== "COMMERCIAL") {
+    throw forbidden(
+      "Les alertes de l’assistant sont réservées aux comptes employés.",
+    )
   }
 }
 
@@ -60,7 +66,9 @@ const findAssistantThread = (key: string) =>
   })
 
 const asRecord = (value: unknown): Record<string, unknown> =>
-  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
+  value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {}
 
 /**
  * Les alertes créées avant l’ajout des fils de discussion n’ont pas de
@@ -72,16 +80,21 @@ const ensureAssistantThread = async (key: string, userId: string) => {
   if (existing) return existing
 
   const candidates = await prisma.notification.findMany({
-    where: { recipient: userId, template: 'ASSISTANT_ESCALATION' },
-    orderBy: { createdAt: 'desc' },
+    where: { recipient: userId, template: "ASSISTANT_ESCALATION" },
+    orderBy: { createdAt: "desc" },
     take: 100,
     select: { id: true, payload: true },
   })
-  const matches = candidates.filter((item) => asRecord(item.payload).reference === key)
+  const matches = candidates.filter(
+    (item) => asRecord(item.payload).reference === key,
+  )
   if (matches.length === 0) return null
 
   const payload = asRecord(matches[0].payload)
-  const sessionId = typeof payload.sessionId === 'string' && payload.sessionId.trim() ? payload.sessionId : null
+  const sessionId =
+    typeof payload.sessionId === "string" && payload.sessionId.trim()
+      ? payload.sessionId
+      : null
   if (sessionId) {
     const bySession = await prisma.assistantThread.findUnique({
       where: { sessionId },
@@ -97,19 +110,31 @@ const ensureAssistantThread = async (key: string, userId: string) => {
   }
 
   const conversation = Array.isArray(payload.conversation)
-    ? payload.conversation.filter((item): item is string => typeof item === 'string')
+    ? payload.conversation.filter(
+        (item): item is string => typeof item === "string",
+      )
     : []
-  const customerMessage = typeof payload.customerMessage === 'string' ? payload.customerMessage : ''
-  if (customerMessage && conversation[conversation.length - 1] !== customerMessage) {
+  const customerMessage =
+    typeof payload.customerMessage === "string" ? payload.customerMessage : ""
+  if (
+    customerMessage &&
+    conversation[conversation.length - 1] !== customerMessage
+  ) {
     conversation.push(customerMessage)
   }
-  const parsedCreatedAt = typeof payload.createdAt === 'string' ? new Date(payload.createdAt) : null
-  const createdAt = parsedCreatedAt && !Number.isNaN(parsedCreatedAt.getTime()) ? parsedCreatedAt : new Date()
+  const parsedCreatedAt =
+    typeof payload.createdAt === "string" ? new Date(payload.createdAt) : null
+  const createdAt =
+    parsedCreatedAt && !Number.isNaN(parsedCreatedAt.getTime())
+      ? parsedCreatedAt
+      : new Date()
   const messages = conversation.map((body, index) => ({
-    authorType: 'CLIENT',
-    authorName: 'Client',
+    authorType: "CLIENT",
+    authorName: "Client",
     body,
-    createdAt: new Date(createdAt.getTime() - (conversation.length - index) * 1000),
+    createdAt: new Date(
+      createdAt.getTime() - (conversation.length - index) * 1000,
+    ),
   }))
 
   try {
@@ -117,7 +142,7 @@ const ensureAssistantThread = async (key: string, userId: string) => {
       data: {
         sessionId,
         reference: key,
-        status: 'OPEN',
+        status: "OPEN",
         messages: messages.length > 0 ? { create: messages } : undefined,
       },
       select: assistantThreadSelect,
@@ -139,8 +164,8 @@ export const staffRouter = Router()
 staffRouter.use(requireAuth, requirePasswordChanged)
 
 staffRouter.get(
-  '/missions',
-  requirePermission('orders:read:own'),
+  "/missions",
+  requirePermission("orders:read:own"),
   validate({ query: missionQuerySchema }),
   asyncHandler(async (req, res) => {
     const query = req.query as unknown as z.infer<typeof missionQuerySchema>
@@ -153,11 +178,11 @@ staffRouter.get(
 )
 
 staffRouter.get(
-  '/notifications',
+  "/notifications",
   asyncHandler(async (req, res) => {
     const data = await prisma.notification.findMany({
-      where: { recipient: req.user!.id, channel: 'IN_APP' },
-      orderBy: { createdAt: 'desc' },
+      where: { recipient: req.user!.id, channel: "IN_APP" },
+      orderBy: { createdAt: "desc" },
       take: 30,
       select: {
         id: true,
@@ -174,43 +199,52 @@ staffRouter.get(
 )
 
 staffRouter.get(
-  '/assistant-alerts',
+  "/assistant-alerts",
   asyncHandler(async (req, res) => {
     ensureAssistantAccess(req.user!.role)
     const data = await prisma.notification.findMany({
-      where: { recipient: req.user!.id, template: 'ASSISTANT_ESCALATION' },
-      orderBy: { createdAt: 'desc' },
+      where: { recipient: req.user!.id, template: "ASSISTANT_ESCALATION" },
+      orderBy: { createdAt: "desc" },
       take: 20,
-      select: { id: true, assistantThreadId: true, status: true, payload: true, createdAt: true },
+      select: {
+        id: true,
+        assistantThreadId: true,
+        status: true,
+        payload: true,
+        createdAt: true,
+      },
     })
     res.json({ data })
   }),
 )
 
 staffRouter.get(
-  '/assistant-threads/:key',
+  "/assistant-threads/:key",
   validate({ params: assistantThreadParamsSchema }),
   asyncHandler(async (req, res) => {
     ensureAssistantAccess(req.user!.role)
     const thread = await ensureAssistantThread(req.params.key, req.user!.id)
-    if (!thread) throw notFound('Discussion introuvable.')
+    if (!thread) throw notFound("Discussion introuvable.")
     res.json({ data: thread })
   }),
 )
 
 staffRouter.post(
-  '/assistant-threads/:key/messages',
-  validate({ params: assistantThreadParamsSchema, body: assistantThreadReplySchema }),
+  "/assistant-threads/:key/messages",
+  validate({
+    params: assistantThreadParamsSchema,
+    body: assistantThreadReplySchema,
+  }),
   asyncHandler(async (req, res) => {
     ensureAssistantAccess(req.user!.role)
     const thread = await ensureAssistantThread(req.params.key, req.user!.id)
-    if (!thread) throw notFound('Discussion introuvable.')
+    if (!thread) throw notFound("Discussion introuvable.")
 
     const message = await prisma.$transaction(async (tx) => {
       const created = await tx.assistantThreadMessage.create({
         data: {
           threadId: thread.id,
-          authorType: 'STAFF',
+          authorType: "STAFF",
           authorId: req.user!.id,
           authorName: req.user!.name,
           body: req.body.body,
@@ -225,16 +259,16 @@ staffRouter.post(
       })
       await tx.assistantThread.update({
         where: { id: thread.id },
-        data: { status: 'ANSWERED' },
+        data: { status: "ANSWERED" },
       })
       await tx.notification.updateMany({
         where: { assistantThreadId: thread.id },
-        data: { status: 'SENT', sentAt: new Date() },
+        data: { status: "SENT", sentAt: new Date() },
       })
       return created
     })
 
-    realtime.emit('assistant:support-message', {
+    realtime.emit("assistant:support-message", {
       threadId: thread.id,
       sessionId: thread.sessionId,
       reference: thread.reference,
@@ -245,19 +279,22 @@ staffRouter.post(
 )
 
 staffRouter.patch(
-  '/assistant-threads/:key',
-  validate({ params: assistantThreadParamsSchema, body: assistantThreadStatusSchema }),
+  "/assistant-threads/:key",
+  validate({
+    params: assistantThreadParamsSchema,
+    body: assistantThreadStatusSchema,
+  }),
   asyncHandler(async (req, res) => {
     ensureAssistantAccess(req.user!.role)
     const thread = await ensureAssistantThread(req.params.key, req.user!.id)
-    if (!thread) throw notFound('Discussion introuvable.')
+    if (!thread) throw notFound("Discussion introuvable.")
 
     const updated = await prisma.assistantThread.update({
       where: { id: thread.id },
       data: { status: req.body.status },
       select: assistantThreadSelect,
     })
-    realtime.emit('assistant:support-status', {
+    realtime.emit("assistant:support-status", {
       threadId: updated.id,
       sessionId: updated.sessionId,
       reference: updated.reference,
@@ -268,20 +305,28 @@ staffRouter.patch(
 )
 
 staffRouter.get(
-  '/missions/:id',
-  requirePermission('orders:read:own'),
+  "/missions/:id",
+  requirePermission("orders:read:own"),
   asyncHandler(async (req, res) => {
     const order = await prisma.order.findFirst({
-      where: { id: req.params.id, assignments: { some: { staffId: req.user!.id, active: true } } },
+      where: {
+        id: req.params.id,
+        assignments: { some: { staffId: req.user!.id, active: true } },
+      },
       include: {
         items: true,
-        history: { orderBy: { createdAt: 'desc' } },
-        assignments: { where: { active: true }, include: { staff: { select: { id: true, name: true } } } },
+        history: { orderBy: { createdAt: "desc" } },
+        assignments: {
+          where: { active: true },
+          include: { staff: { select: { id: true, name: true } } },
+        },
         group: { select: { publicRef: true } },
       },
     })
     if (!order) {
-      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Mission introuvable.' } })
+      res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "Mission introuvable." } })
       return
     }
     res.json({ data: order })

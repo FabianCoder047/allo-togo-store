@@ -70,9 +70,7 @@ export function OrderDetailPanel({
   const canDeliver = actions.includes("deliver")
   const canFail = actions.includes("fail")
   const canPickup = actions.includes("pickup")
-  const canManage =
-    user.role === "DIRECTOR" ||
-    user.role === "COMMERCIAL"
+  const canManage = user.role === "DIRECTOR" || user.role === "COMMERCIAL"
   const cashHandoverPending =
     order?.status === "LIVREE" &&
     order.fulfillmentMode === "LIVRAISON" &&
@@ -99,15 +97,14 @@ export function OrderDetailPanel({
   // validation de la livraison par le chef d’équipe : la régularisation
   // s’effectue ensuite (espèces) ou après vérification de la capture (mobile).
   const paymentDeclared =
-    order?.customerPaymentChoice === 'ESPECES' ||
-    order?.customerPaymentChoice === 'FLOOZ' ||
-    order?.customerPaymentChoice === 'MIXX_BY_YAS'
+    order?.customerPaymentChoice === "ESPECES" ||
+    order?.customerPaymentChoice === "FLOOZ" ||
+    order?.customerPaymentChoice === "MIXX_BY_YAS"
   // Pour la remise des espèces au bureau (cash handover), le paiement est
   // toujours requis même si le client a déclaré espèces (le paiement n'a pas
   // encore été encaissé).
   const paymentRequired =
-    (order?.remainingDue ?? 0) > 0 &&
-    (cashHandoverPending || !paymentDeclared)
+    (order?.remainingDue ?? 0) > 0 && (cashHandoverPending || !paymentDeclared)
   const canRecordPaymentHere =
     Boolean(order) &&
     paymentRequired &&
@@ -115,10 +112,9 @@ export function OrderDetailPanel({
       ? user.role === "DIRECTOR" || user.role === "COMMERCIAL"
       : canManage &&
         order?.fulfillmentMode !== "LIVRAISON" &&
-        [
-          "COMMANDE_ACCEPTEE",
-          "COMMANDE_EN_PREPARATION",
-        ].includes(order?.status ?? ""))
+        ["COMMANDE_ACCEPTEE", "COMMANDE_EN_PREPARATION"].includes(
+          order?.status ?? "",
+        ))
 
   const load = useCallback(
     async (options?: { silent?: boolean }) => {

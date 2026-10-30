@@ -4,12 +4,13 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
-} from 'react'
-import { Icon } from './Icon'
+} from "react"
+import { Icon } from "./Icon"
 
-type Rotation = { x: number; y: number }
+type Rotation = { x: number y: number }
 
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value))
 
 /**
  * Visuel produit manipulable : un glissement horizontal ou vertical fait
@@ -19,7 +20,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 export function RotatableImage({
   src,
   alt,
-  className = '',
+  className = "",
   showHint = true,
 }: {
   src: string
@@ -39,7 +40,7 @@ export function RotatableImage({
   const reset = () => setRotation({ x: 0, y: 0 })
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return
+    if (event.pointerType === "mouse" && event.button !== 0) return
     event.currentTarget.setPointerCapture(event.pointerId)
     dragRef.current = {
       pointerId: event.pointerId,
@@ -69,19 +70,31 @@ export function RotatableImage({
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     const step = 8
-    if (event.key === 'ArrowLeft') {
+    if (event.key === "ArrowLeft") {
       event.preventDefault()
-      setRotation((current) => ({ ...current, y: clamp(current.y - step, -55, 55) }))
-    } else if (event.key === 'ArrowRight') {
+      setRotation((current) => ({
+        ...current,
+        y: clamp(current.y - step, -55, 55),
+      }))
+    } else if (event.key === "ArrowRight") {
       event.preventDefault()
-      setRotation((current) => ({ ...current, y: clamp(current.y + step, -55, 55) }))
-    } else if (event.key === 'ArrowUp') {
+      setRotation((current) => ({
+        ...current,
+        y: clamp(current.y + step, -55, 55),
+      }))
+    } else if (event.key === "ArrowUp") {
       event.preventDefault()
-      setRotation((current) => ({ ...current, x: clamp(current.x + step, -28, 28) }))
-    } else if (event.key === 'ArrowDown') {
+      setRotation((current) => ({
+        ...current,
+        x: clamp(current.x + step, -28, 28),
+      }))
+    } else if (event.key === "ArrowDown") {
       event.preventDefault()
-      setRotation((current) => ({ ...current, x: clamp(current.x - step, -28, 28) }))
-    } else if (event.key === 'Escape' || event.key === 'Enter') {
+      setRotation((current) => ({
+        ...current,
+        x: clamp(current.x - step, -28, 28),
+      }))
+    } else if (event.key === "Escape" || event.key === "Enter") {
       reset()
     }
   }
@@ -93,7 +106,7 @@ export function RotatableImage({
 
   return (
     <div
-      className={`rotatable ${className} ${dragging ? 'dragging' : ''}`.trim()}
+      className={`rotatable ${className} ${dragging ? "dragging" : ""}`.trim()}
       tabIndex={0}
       role="group"
       aria-label={`${alt}. Faites glisser ou utilisez les flèches pour pivoter le visuel.`}
@@ -105,7 +118,13 @@ export function RotatableImage({
       onDoubleClick={reset}
       onKeyDown={onKeyDown}
     >
-      <img src={src} alt={alt} style={style} draggable={false} onDragStart={(event) => event.preventDefault()} />
+      <img
+        src={src}
+        alt={alt}
+        style={style}
+        draggable={false}
+        onDragStart={(event) => event.preventDefault()}
+      />
       {showHint && (
         <span className="rotatable-hint" aria-hidden="true">
           <Icon name="rotate" size={12} /> Glissez pour pivoter

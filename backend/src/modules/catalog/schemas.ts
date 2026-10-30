@@ -1,12 +1,12 @@
-import { z } from 'zod'
+import { z } from "zod"
 
-export const productTypeSchema = z.enum(['GPS', 'DRINK', 'SERVICE'])
+export const productTypeSchema = z.enum(["GPS", "DRINK", "SERVICE"])
 
 export const listProductsQuerySchema = z.object({
   type: productTypeSchema.optional(),
   category: z.string().optional(),
   search: z.string().max(120).optional(),
-  featured: z.enum(['true', 'false']).optional(),
+  featured: z.enum(["true", "false"]).optional(),
 })
 
 export const categoryInputSchema = z.object({
@@ -15,7 +15,10 @@ export const categoryInputSchema = z.object({
     .string()
     .min(2)
     .max(80)
-    .regex(/^[a-z0-9-]+$/, 'Le slug ne peut contenir que des minuscules, chiffres et tirets.'),
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Le slug ne peut contenir que des minuscules, chiffres et tirets.",
+    ),
   type: productTypeSchema,
   description: z.string().max(500).optional().nullable(),
   active: z.boolean().default(true),
@@ -44,17 +47,34 @@ const wholesalePricesSchema = z
       const tier = tiers[index]
       const maxQuantity = tier.maxQuantity ?? Infinity
       if (tier.minQuantity > maxQuantity) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [index, 'maxQuantity'], message: 'La quantité maximale doit être supérieure ou égale au minimum.' })
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [index, "maxQuantity"],
+          message:
+            "La quantité maximale doit être supérieure ou égale au minimum.",
+        })
       }
       if (index > 0) {
         if (tier.minQuantity <= tiers[index - 1].minQuantity) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, path: [index, 'minQuantity'], message: 'Classez les seuils par quantité croissante.' })
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [index, "minQuantity"],
+            message: "Classez les seuils par quantité croissante.",
+          })
         }
         if (tier.minQuantity <= (tiers[index - 1].maxQuantity ?? Infinity)) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, path: [index, 'minQuantity'], message: 'Les paliers ne doivent pas se chevaucher.' })
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [index, "minQuantity"],
+            message: "Les paliers ne doivent pas se chevaucher.",
+          })
         }
         if (tier.unitPrice >= tiers[index - 1].unitPrice) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, path: [index, 'unitPrice'], message: 'Le prix doit diminuer à chaque palier.' })
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [index, "unitPrice"],
+            message: "Le prix doit diminuer à chaque palier.",
+          })
         }
       }
     }
@@ -67,7 +87,10 @@ const productShape = z.object({
     .string()
     .min(2)
     .max(120)
-    .regex(/^[a-z0-9-]+$/, 'Le slug ne peut contenir que des minuscules, chiffres et tirets.')
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Le slug ne peut contenir que des minuscules, chiffres et tirets.",
+    )
     .optional(),
   sku: z.string().min(2).max(60),
   type: productTypeSchema,
@@ -78,36 +101,84 @@ const productShape = z.object({
   cartonPrice: z.number().int().positive().optional().nullable(),
   wholesalePrices: wholesalePricesSchema.optional().nullable(),
   quoteOnly: z.boolean().default(false),
-  specs: z.record(z.string().max(80), z.string().max(500)).refine((value) => Object.keys(value).length <= 30, '30 caractéristiques maximum.').optional().nullable(),
+  specs: z
+    .record(z.string().max(80), z.string().max(500))
+    .refine(
+      (value) => Object.keys(value).length <= 30,
+      "30 caractéristiques maximum.",
+    )
+    .optional()
+    .nullable(),
   stock: z.number().int().min(0).optional().nullable(),
   manageStock: z.boolean().default(false),
   available: z.boolean().default(true),
   active: z.boolean().default(true),
   featured: z.boolean().default(false),
   sortOrder: z.number().int().min(0).default(0),
-  images: z.array(imageSchema).min(1, 'Chaque fiche doit comporter au moins une image.').max(8),
+  images: z
+    .array(imageSchema)
+    .min(1, "Chaque fiche doit comporter au moins une image.")
+    .max(8),
   videos: z.array(imageSchema).max(8).default([]),
 })
 
 export const productInputSchema = productShape.superRefine((product, ctx) => {
-  if (product.previousPrice !== null && product.previousPrice !== undefined && product.previousPrice <= product.price) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['previousPrice'], message: 'Le prix avant doit être supérieur au prix actuel.' })
+  if (
+    product.previousPrice !== null &&
+    product.previousPrice !== undefined &&
+    product.previousPrice <= product.price
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["previousPrice"],
+      message: "Le prix avant doit être supérieur au prix actuel.",
+    })
   }
-  if (product.wholesalePrices?.some((tier) => tier.unitPrice >= product.price)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['wholesalePrices'], message: 'Les prix de gros doivent être inférieurs au prix actuel.' })
+  if (
+    product.wholesalePrices?.some((tier) => tier.unitPrice >= product.price)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["wholesalePrices"],
+      message: "Les prix de gros doivent être inférieurs au prix actuel.",
+    })
   }
-  if (product.type === 'SERVICE' && (product.manageStock || product.stock !== undefined && product.stock !== null)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['stock'], message: 'Les services ne gèrent pas de stock.' })
+  if (
+    product.type === "SERVICE" &&
+    (product.manageStock ||
+      (product.stock !== undefined && product.stock !== null))
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["stock"],
+      message: "Les services ne gèrent pas de stock.",
+    })
   }
 })
 
-export const productUpdateSchema = productShape.partial().superRefine((product, ctx) => {
-  if (product.type === 'SERVICE' && (product.manageStock || product.stock !== undefined && product.stock !== null)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['stock'], message: 'Les services ne gèrent pas de stock.' })
-  }
-})
+export const productUpdateSchema = productShape
+  .partial()
+  .superRefine((product, ctx) => {
+    if (
+      product.type === "SERVICE" &&
+      (product.manageStock ||
+        (product.stock !== undefined && product.stock !== null))
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["stock"],
+        message: "Les services ne gèrent pas de stock.",
+      })
+    }
+  })
 
 export const stockAdjustSchema = z.object({
-  quantity: z.number().int().refine((value) => value !== 0, 'La quantité doit être différente de zéro.'),
+  quantity: z
+    .number()
+    .int()
+    .refine(
+      (value) => value !== 0,
+      "La quantité doit être différente de zéro.",
+    ),
   reason: z.string().max(300).optional(),
 })

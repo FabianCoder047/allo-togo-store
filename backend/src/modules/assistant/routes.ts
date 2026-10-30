@@ -1,16 +1,16 @@
-import { Router } from 'express'
-import { z } from 'zod'
-import { asyncHandler } from '../../lib/asyncHandler.js'
-import { prisma } from '../../db/prisma.js'
-import { validate } from '../../middleware/validate.js'
-import { assistantLimiter } from '../../middleware/rateLimit.js'
-import { requireAuth } from '../../middleware/auth.js'
+import { Router } from "express"
+import { z } from "zod"
+import { asyncHandler } from "../../lib/asyncHandler.js"
+import { prisma } from "../../db/prisma.js"
+import { validate } from "../../middleware/validate.js"
+import { assistantLimiter } from "../../middleware/rateLimit.js"
+import { requireAuth } from "../../middleware/auth.js"
 import {
   assistantAskSchema,
   knowledgeInputSchema,
   knowledgeQuerySchema,
-} from './schemas.js'
-import { askAssistant, createKnowledge, listKnowledge } from './service.js'
+} from "./schemas.js"
+import { askAssistant, createKnowledge, listKnowledge } from "./service.js"
 
 export const assistantRouter = Router()
 
@@ -19,7 +19,7 @@ const threadParamsSchema = z.object({
 })
 
 assistantRouter.get(
-  '/assistant/thread/:sessionId',
+  "/assistant/thread/:sessionId",
   validate({ params: threadParamsSchema }),
   asyncHandler(async (req, res) => {
     const thread = await prisma.assistantThread.findUnique({
@@ -31,7 +31,7 @@ assistantRouter.get(
         createdAt: true,
         updatedAt: true,
         messages: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: { createdAt: "asc" },
           take: 200,
           select: {
             id: true,
@@ -48,7 +48,7 @@ assistantRouter.get(
 )
 
 assistantRouter.post(
-  '/assistant',
+  "/assistant",
   assistantLimiter,
   validate({ body: assistantAskSchema }),
   asyncHandler(async (req, res) => {
@@ -58,7 +58,7 @@ assistantRouter.post(
 )
 
 assistantRouter.get(
-  '/assistant/knowledge',
+  "/assistant/knowledge",
   requireAuth,
   validate({ query: knowledgeQuerySchema }),
   asyncHandler(async (req, res) => {
@@ -68,7 +68,7 @@ assistantRouter.get(
 )
 
 assistantRouter.post(
-  '/assistant/knowledge',
+  "/assistant/knowledge",
   requireAuth,
   validate({ body: knowledgeInputSchema }),
   asyncHandler(async (req, res) => {

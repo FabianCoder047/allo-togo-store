@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from "react"
 
 export const MAX_VOICE_DURATION_MS = 120_000
 
@@ -7,26 +7,29 @@ export interface VoicePreview {
   durationMs: number
 }
 
-type RecorderStatus = 'idle' | 'recording' | 'paused' | 'preview' | 'error'
+type RecorderStatus = "idle" | "recording" | "paused" | "preview" | "error"
 
 const preferredMimeTypes = [
-  'audio/webm;codecs=opus',
-  'audio/webm',
-  'audio/ogg;codecs=opus',
-  'audio/mp4',
-  'audio/mpeg',
+  "audio/webm;codecs=opus",
+  "audio/webm",
+  "audio/ogg;codecs=opus",
+  "audio/mp4",
+  "audio/mpeg",
 ]
 
 const pickMimeType = () => {
-  if (typeof MediaRecorder === 'undefined') return ''
-  return preferredMimeTypes.find((type) => MediaRecorder.isTypeSupported(type)) ?? ''
+  if (typeof MediaRecorder === "undefined") return ""
+  return (
+    preferredMimeTypes.find((type) => MediaRecorder.isTypeSupported(type)) ?? ""
+  )
 }
 
 const readAsDataUrl = (blob: Blob) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result ?? ''))
-    reader.onerror = () => reject(new Error('Lecture de l’enregistrement impossible.'))
+    reader.onload = () => resolve(String(reader.result ?? ""))
+    reader.onerror = () =>
+      reject(new Error("Lecture de l’enregistrement impossible."))
     reader.readAsDataURL(blob)
   })
 
@@ -36,11 +39,11 @@ const readAsDataUrl = (blob: Blob) =>
  */
 export function useVoiceRecorder() {
   const supported =
-    typeof navigator !== 'undefined' &&
+    typeof navigator !== "undefined" &&
     Boolean(navigator.mediaDevices?.getUserMedia) &&
-    typeof MediaRecorder !== 'undefined'
+    typeof MediaRecorder !== "undefined"
 
-  const [status, setStatus] = useState<RecorderStatus>('idle')
+  const [status, setStatus] = useState<RecorderStatus>("idle")
   const [elapsedMs, setElapsedMs] = useState(0)
   const [preview, setPreview] = useState<VoicePreview | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -69,7 +72,7 @@ export function useVoiceRecorder() {
   const reset = useCallback(() => {
     clearTimer()
     cancelledRef.current = true
-    if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+    if (recorderRef.current && recorderRef.current.state !== "inactive") {
       recorderRef.current.stop()
     }
     recorderRef.current = null
@@ -78,7 +81,7 @@ export function useVoiceRecorder() {
     accumulatedMsRef.current = 0
     elapsedRef.current = 0
     releaseStream()
-    setStatus('idle')
+    setStatus("idle")
     setElapsedMs(0)
     setPreview(null)
   }, [releaseStream])
@@ -88,9 +91,9 @@ export function useVoiceRecorder() {
   const stop = useCallback(() => {
     clearTimer()
     const recorder = recorderRef.current
-    if (!recorder || recorder.state === 'inactive') return
+    if (!recorder || recorder.state === "inactive") return
     const elapsed =
-      recorder.state === 'paused'
+      recorder.state === "paused"
         ? accumulatedMsRef.current
         : accumulatedMsRef.current + (Date.now() - segmentStartedAtRef.current)
     const durationMs = Math.max(0, Math.min(MAX_VOICE_DURATION_MS, elapsed))
@@ -115,8 +118,10 @@ export function useVoiceRecorder() {
 
   const start = useCallback(async () => {
     if (!supported) {
-      setError('L’enregistrement vocal n’est pas pris en charge par ce navigateur.')
-      setStatus('error')
+      setError(
+        "L’enregistrement vocal n’est pas pris en charge par ce navigateur.",
+      )
+      setStatus("error")
       return
     }
     setError(null)
@@ -141,17 +146,24 @@ export function useVoiceRecorder() {
 
       recorder.onstop = async () => {
         releaseStream()
-        const durationMs = Math.max(200, Math.min(MAX_VOICE_DURATION_MS, elapsedRef.current))
+        const durationMs = Math.max(
+          200,
+          Math.min(MAX_VOICE_DURATION_MS, elapsedRef.current),
+        )
         if (cancelledRef.current) return
         try {
-          const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' })
-          if (blob.size === 0) throw new Error('Enregistrement vide.')
+          const blob = new Blob(chunksRef.current, {
+            type: recorder.mimeType || "audio/webm",
+          })
+          if (blob.size === 0) throw new Error("Enregistrement vide.")
           const dataUrl = await readAsDataUrl(blob)
           setPreview({ dataUrl, durationMs })
-          setStatus('preview')
+          setStatus("preview")
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'Enregistrement impossible.')
-          setStatus('error')
+          setError(
+            err instanceof Error ? err.message : "Enregistrement impossible.",
+          )
+          setStatus("error")
         }
       }
 
@@ -159,25 +171,26 @@ export function useVoiceRecorder() {
       elapsedRef.current = 0
       segmentStartedAtRef.current = Date.now()
       setElapsedMs(0)
-      setStatus('recording')
+      setStatus("recording")
       recorder.start(250)
       startTimer()
     } catch (err) {
       releaseStream()
       const denied =
-        err instanceof DOMException && (err.name === 'NotAllowedError' || err.name === 'SecurityError')
+        err instanceof DOMException &&
+        (err.name === "NotAllowedError" || err.name === "SecurityError")
       setError(
         denied
-          ? 'Accès au microphone refusé. Autorisez le microphone dans votre navigateur.'
-          : 'Impossible d’accéder au microphone.',
+          ? "Accès au microphone refusé. Autorisez le microphone dans votre navigateur."
+          : "Impossible d’accéder au microphone.",
       )
-      setStatus('error')
+      setStatus("error")
     }
   }, [releaseStream, startTimer, supported])
 
   const pause = useCallback(() => {
     const recorder = recorderRef.current
-    if (!recorder || recorder.state !== 'recording') return
+    if (!recorder || recorder.state !== "recording") return
     const elapsed = Math.min(
       MAX_VOICE_DURATION_MS,
       accumulatedMsRef.current + (Date.now() - segmentStartedAtRef.current),
@@ -187,15 +200,15 @@ export function useVoiceRecorder() {
     setElapsedMs(elapsed)
     clearTimer()
     recorder.pause()
-    setStatus('paused')
+    setStatus("paused")
   }, [])
 
   const resume = useCallback(() => {
     const recorder = recorderRef.current
-    if (!recorder || recorder.state !== 'paused') return
+    if (!recorder || recorder.state !== "paused") return
     segmentStartedAtRef.current = Date.now()
     recorder.resume()
-    setStatus('recording')
+    setStatus("recording")
     startTimer()
   }, [startTimer])
 

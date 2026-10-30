@@ -38,16 +38,8 @@ import type {
   StaffUser,
 } from "../types"
 
-type Tab =
-  | "overview"
-  | "orders"
-  | "catalog"
-  | "quotes"
-  | "users"
-  | "infrastructure"
-  | "audit"
-  | "settings"
-type PendingDeletion = { kind: "catalog"; id: string; name: string } | {
+type Tab = "overview" | "orders" | "catalog" | "quotes" | "users" | "infrastructure" | "audit" | "settings"
+type PendingDeletion = { kind: "catalog" id: string name: string } | {
   kind: "staff"
   id: string
   name: string
@@ -647,9 +639,7 @@ function AdminWorkspace({
                         <ul className="distribution-list">
                           {dashboard.charts.statusDistribution.map((row) => (
                             <li key={row.status}>
-                              <span>
-                                {orderStatusLabel(row.status)}
-                              </span>
+                              <span>{orderStatusLabel(row.status)}</span>
                               <strong>{row.count}</strong>
                             </li>
                           ))}
@@ -1327,8 +1317,8 @@ function CatalogProductModal({
   onSaved: () => void
   notify: (message: string, tone?: "success" | "error" | "info") => void
 }) {
-  type MediaItem = { url: string; alt: string | null; sortOrder: number }
-  type TierRow = { minQuantity: string; maxQuantity: string; unitPrice: string }
+  type MediaItem = { url: string alt: string | null sortOrder: number }
+  type TierRow = { minQuantity: string maxQuantity: string unitPrice: string }
 
   const [type, setType] = useState<ProductType>(product?.type ?? initialType)
   const [submitting, setSubmitting] = useState(false)
@@ -1467,7 +1457,10 @@ function CatalogProductModal({
               return
             }
             if (!priceRaw || Number.isNaN(price) || price < 0) {
-              notify("Le prix est obligatoire et doit être un nombre valide.", "error")
+              notify(
+                "Le prix est obligatoire et doit être un nombre valide.",
+                "error",
+              )
               return
             }
             const specs = Object.fromEntries(

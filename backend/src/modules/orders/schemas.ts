@@ -163,12 +163,7 @@ export const noteSchema = z.object({
 
 export const paymentSchema = z.object({
   amount: z.number().int().positive().max(100_000_000),
-  method: z.enum([
-    "ESPECES",
-    "FLOOZ",
-    "MIXX_BY_YAS",
-    "CARTE_BANCAIRE",
-  ]),
+  method: z.enum(["ESPECES", "FLOOZ", "MIXX_BY_YAS", "CARTE_BANCAIRE"]),
   reference: z.string().max(160).optional(),
   idempotencyKey: z.string().min(8).max(120).optional(),
 })
@@ -202,10 +197,14 @@ export const trackingPaymentChoiceSchema = z.discriminatedUnion("choice", [
   z.object({ choice: z.literal("ESPECES") }),
   z.object({
     choice: z.literal("FLOOZ"),
-    phone: mobileMoneyNumber(["78", "79", "96", "97", "98", "99"]).optional().nullable(),
+    phone: mobileMoneyNumber(["78", "79", "96", "97", "98", "99"])
+      .optional()
+      .nullable(),
   }),
   z.object({
     choice: z.literal("MIXX_BY_YAS"),
-    phone: mobileMoneyNumber(["70", "71", "72", "90", "91", "92", "93"]).optional().nullable(),
+    phone: mobileMoneyNumber(["70", "71", "72", "90", "91", "92", "93"])
+      .optional()
+      .nullable(),
   }),
 ])

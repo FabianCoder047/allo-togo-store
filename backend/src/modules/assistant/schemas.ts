@@ -1,7 +1,7 @@
-import { z } from 'zod'
+import { z } from "zod"
 
 const historyItemSchema = z.object({
-  role: z.enum(['client', 'ai']),
+  role: z.enum(["client", "ai"]),
   text: z.string().trim().min(1).max(2000),
 })
 
@@ -10,7 +10,11 @@ const historyItemSchema = z.object({
  * les relances du type « et pour une moto ? » sans conserver de session en base.
  */
 export const assistantAskSchema = z.object({
-  message: z.string().trim().min(1, 'Le message ne peut pas être vide.').max(1200),
+  message: z
+    .string()
+    .trim()
+    .min(1, "Le message ne peut pas être vide.")
+    .max(1200),
   sessionId: z.string().trim().min(8).max(80).optional(),
   history: z.array(historyItemSchema).max(10).optional(),
 })
@@ -18,7 +22,7 @@ export const assistantAskSchema = z.object({
 export type AssistantAskInput = z.infer<typeof assistantAskSchema>
 
 export const knowledgeQuerySchema = z.object({
-  active: z.enum(['true', 'false']).optional(),
+  active: z.enum(["true", "false"]).optional(),
   q: z.string().max(120).optional(),
 })
 

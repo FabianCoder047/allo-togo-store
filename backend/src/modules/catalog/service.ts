@@ -1,47 +1,52 @@
-import { Prisma, type ProductType } from '@prisma/client'
-import { prisma } from '../../db/prisma.js'
-import { conflict, notFound } from '../../lib/errors.js'
-import type { z } from 'zod'
+import { Prisma, type ProductType } from "@prisma/client"
+import { prisma } from "../../db/prisma.js"
+import { conflict, notFound } from "../../lib/errors.js"
+import type { z } from "zod"
 import type {
   categoryInputSchema,
   categoryUpdateSchema,
   productInputSchema,
   productUpdateSchema,
-} from './schemas.js'
+} from "./schemas.js"
 
 const productInclude = {
-  images: { orderBy: { sortOrder: 'asc' as const } },
-  videos: { orderBy: { sortOrder: 'asc' as const } },
+  images: { orderBy: { sortOrder: "asc" as const } },
+  videos: { orderBy: { sortOrder: "asc" as const } },
   category: { select: { id: true, name: true, slug: true, type: true } },
 }
 
 const slugify = (value: string) =>
   value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '') || 'catalogue'
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "catalogue"
 
 const uniqueProductSlug = async (name: string, exceptId?: string) => {
   const base = slugify(name)
   let slug = base
   let suffix = 2
   while (true) {
-    const existing = await prisma.product.findUnique({ where: { slug }, select: { id: true } })
+    const existing = await prisma.product.findUnique({
+      where: { slug },
+      select: { id: true },
+    })
     if (!existing || existing.id === exceptId) return slug
     slug = `${base}-${suffix}`
     suffix += 1
   }
 }
 
-export const listCategories = async (options: { includeInactive?: boolean; type?: ProductType } = {}) => {
+export const listCategories = async (
+  options: { includeInactive?: boolean type?: ProductType } = {},
+) => {
   return prisma.category.findMany({
     where: {
       ...(options.includeInactive ? {} : { active: true }),
       ...(options.type ? { type: options.type } : {}),
     },
-    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     include: { _count: { select: { products: true } } },
   })
 }
@@ -63,9 +68,11 @@ export const listProducts = async (query: {
     ...(query.search
       ? {
           OR: [
-            { name: { contains: query.search, mode: 'insensitive' } },
-            { shortDescription: { contains: query.search, mode: 'insensitive' } },
-            { sku: { contains: query.search, mode: 'insensitive' } },
+            { name: { contains: query.search, mode: "insensitive" } },
+            {
+              shortDescription: { contains: query.search, mode: "insensitive" },
+            },
+            { sku: { contains: query.search, mode: "insensitive" } },
           ],
         }
       : {}),
@@ -73,7 +80,7 @@ export const listProducts = async (query: {
 
   return prisma.product.findMany({
     where,
-    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     include: productInclude,
   })
 }
@@ -86,24 +93,36 @@ export const getProduct = async (idOrSlug: string, includeInactive = false) => {
     },
     include: productInclude,
   })
-  if (!product) throw notFound('Produit introuvable.')
+  if (!product) throw notFound("Produit introuvable.")
   return product
 }
 
-export const createCategory = async (input: z.infer<typeof categoryInputSchema>) => {
+export const createCategory = async (
+  input: z.infer<typeof categoryInputSchema>,
+) => {
   return prisma.category.create({ data: input })
 }
 
-export const updateCategory = async (id: string, input: z.infer<typeof categoryUpdateSchema>) => {
+export const updateCategory = async (
+  id: string,
+  input: z.infer<typeof categoryUpdateSchema>,
+) => {
   const category = await prisma.category.findUnique({ where: { id } })
-  if (!category) throw notFound('Catégorie introuvable.')
+  if (!category) throw notFound("Catégorie introuvable.")
   return prisma.category.update({ where: { id }, data: input })
 }
 
-export const createProduct = async (input: z.infer<typeof productInputSchema>) => {
-  const category = await prisma.category.findUnique({ where: { id: input.categoryId } })
-  if (!category) throw notFound('Catégorie introuvable.')
-  if (category.type !== input.type) throw conflict('Le type du produit ne correspond pas à celui de la catégorie.')
+export const createProduct = async (
+  input: z.infer<typeof productInputSchema>,
+) => {
+  const category = await prisma.category.findUnique({
+    where: { id: input.categoryId },
+  })
+  if (!category) throw notFound("Catégorie introuvable.")
+  if (category.type !== input.type)
+    throw conflict(
+      "Le type du produit ne correspond pas à celui de la catégorie.",
+    )
 
   const { images, videos, ...data } = input
   return prisma.product.create({
@@ -119,41 +138,61 @@ export const createProduct = async (input: z.infer<typeof productInputSchema>) =
   })
 }
 
-export const updateProduct = async (id: string, input: z.infer<typeof productUpdateSchema>) => {
+export const updateProduct = async (
+  id: string,
+  input: z.infer<typeof productUpdateSchema>,
+) => {
   const product = await prisma.product.findUnique({
     where: { id },
     include: { images: { select: { id: true } } },
   })
-  if (!product) throw notFound('Produit introuvable.')
+  if (!product) throw notFound("Produit introuvable.")
   if ((input.images ?? product.images).length === 0) {
-    throw conflict('Chaque produit ou service doit comporter au moins une image.')
+    throw conflict(
+      "Chaque produit ou service doit comporter au moins une image.",
+    )
   }
 
   const nextType = input.type ?? product.type
   const nextCategoryId = input.categoryId ?? product.categoryId
   if (nextType !== product.type || nextCategoryId !== product.categoryId) {
-    const category = await prisma.category.findUnique({ where: { id: nextCategoryId } })
-    if (!category) throw notFound('Catégorie introuvable.')
-    if (category.type !== nextType) throw conflict('Le type du produit ne correspond pas à celui de la catégorie.')
+    const category = await prisma.category.findUnique({
+      where: { id: nextCategoryId },
+    })
+    if (!category) throw notFound("Catégorie introuvable.")
+    if (category.type !== nextType)
+      throw conflict(
+        "Le type du produit ne correspond pas à celui de la catégorie.",
+      )
   }
   const nextPrice = input.price ?? product.price
-  const nextPreviousPrice = input.previousPrice === undefined ? product.previousPrice : input.previousPrice
-  if (nextPreviousPrice !== null && nextPreviousPrice !== undefined && nextPreviousPrice <= nextPrice) {
-    throw conflict('Le prix avant doit être supérieur au prix actuel.')
+  const nextPreviousPrice =
+    input.previousPrice === undefined
+      ? product.previousPrice
+      : input.previousPrice
+  if (
+    nextPreviousPrice !== null &&
+    nextPreviousPrice !== undefined &&
+    nextPreviousPrice <= nextPrice
+  ) {
+    throw conflict("Le prix avant doit être supérieur au prix actuel.")
   }
-  const nextWholesalePrices = input.wholesalePrices === undefined ? product.wholesalePrices : input.wholesalePrices
+  const nextWholesalePrices =
+    input.wholesalePrices === undefined
+      ? product.wholesalePrices
+      : input.wholesalePrices
   if (
     Array.isArray(nextWholesalePrices) &&
     nextWholesalePrices.some(
       (tier) =>
-        typeof tier === 'object' &&
+        typeof tier === "object" &&
         tier !== null &&
-        'unitPrice' in tier &&
-        typeof tier.unitPrice === 'number' &&
+        "unitPrice" in tier &&
+        typeof tier.unitPrice === "number" &&
         tier.unitPrice >= nextPrice,
     )
   ) {
-    throw conflict('Les prix de gros doivent être inférieurs au prix actuel.')
+    throw conflict("Les prix de gros doivent être inférieurs au prix actuel.")
   }
 
   const { images, videos, ...data } = input
@@ -177,7 +216,8 @@ export const updateProduct = async (id: string, input: z.infer<typeof productUpd
         ...(slug ? { slug } : {}),
         ...(categoryId ? { category: { connect: { id: categoryId } } } : {}),
         specs: data.specs === null ? undefined : data.specs,
-        wholesalePrices: data.wholesalePrices === null ? Prisma.DbNull : data.wholesalePrices,
+        wholesalePrices:
+          data.wholesalePrices === null ? Prisma.DbNull : data.wholesalePrices,
         ...(images ? { images: { create: images } } : {}),
         ...(videos ? { videos: { create: videos } } : {}),
       },
@@ -191,9 +231,11 @@ export const deleteProduct = async (id: string) => {
     where: { id },
     include: { _count: { select: { items: true, movements: true } } },
   })
-  if (!product) throw notFound('Contenu du catalogue introuvable.')
+  if (!product) throw notFound("Contenu du catalogue introuvable.")
   if (product._count.items > 0 || product._count.movements > 0) {
-    throw conflict('Ce contenu est lié à des commandes ou mouvements de stock. Désactivez-le plutôt que de le supprimer.')
+    throw conflict(
+      "Ce contenu est lié à des commandes ou mouvements de stock. Désactivez-le plutôt que de le supprimer.",
+    )
   }
 
   await prisma.product.delete({ where: { id } })
@@ -208,10 +250,11 @@ export const adjustStock = async (
 ) => {
   return prisma.$transaction(async (tx) => {
     const product = await tx.product.findUnique({ where: { id: productId } })
-    if (!product) throw notFound('Produit introuvable.')
-    if (product.stock === null) throw conflict('Le stock n’est pas géré pour ce produit.')
+    if (!product) throw notFound("Produit introuvable.")
+    if (product.stock === null)
+      throw conflict("Le stock n’est pas géré pour ce produit.")
     const nextStock = product.stock + quantity
-    if (nextStock < 0) throw conflict('Le stock ne peut pas devenir négatif.')
+    if (nextStock < 0) throw conflict("Le stock ne peut pas devenir négatif.")
 
     const updated = await tx.product.update({
       where: { id: productId },
@@ -221,7 +264,7 @@ export const adjustStock = async (
     await tx.inventoryMovement.create({
       data: {
         productId,
-        type: quantity > 0 ? 'IN' : 'OUT',
+        type: quantity > 0 ? "IN" : "OUT",
         quantity,
         reason,
         actorId,

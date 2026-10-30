@@ -187,7 +187,9 @@ describe("Paiement client depuis le suivi de livraison", () => {
     expect(tracking.body.data.customerPaymentPhone).toBeUndefined()
     // Une déclaration mobile n'est pas un encaissement : le chef d'équipe doit
     // vérifier la capture avant tout paiement enregistré.
-    expect(await prisma.payment.findFirst({ where: { orderId: order.id } })).toBeNull()
+    expect(
+      await prisma.payment.findFirst({ where: { orderId: order.id } }),
+    ).toBeNull()
     const auditEntry = await prisma.auditLog.findFirstOrThrow({
       where: {
         entityId: order.id,

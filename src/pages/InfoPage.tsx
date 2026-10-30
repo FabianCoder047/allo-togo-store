@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import { Icon } from '../components/Icon'
-import { PageHero, SectionTitle } from '../components/ui'
-import { api, errorMessage } from '../lib/api'
-import { trackEvent } from '../lib/analytics'
+import { useState } from "react"
+import { Icon } from "../components/Icon"
+import { PageHero, SectionTitle } from "../components/ui"
+import { api, errorMessage } from "../lib/api"
+import { trackEvent } from "../lib/analytics"
 
-export function InfoPage({ type }: { type: 'about' | 'contact' }) {
-  if (type === 'about') {
+export function InfoPage({ type }: { type: "about" | "contact" }) {
+  if (type === "about") {
     return (
       <main>
         <PageHero
@@ -62,13 +62,13 @@ function ContactPage() {
     setError(null)
     try {
       const quote = await api.quotes.create({
-        name: String(form.get('name') ?? ''),
-        phone: String(form.get('phone') ?? ''),
-        email: String(form.get('email') ?? '') || null,
-        message: String(form.get('message') ?? ''),
+        name: String(form.get("name") ?? ""),
+        phone: String(form.get("phone") ?? ""),
+        email: String(form.get("email") ?? "") || null,
+        message: String(form.get("message") ?? ""),
       })
       setSent({ reference: quote.reference })
-      trackEvent('quote_requested', { source: 'contact' })
+      trackEvent("quote_requested", { source: "contact" })
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -96,11 +96,16 @@ function ContactPage() {
             <span className="eyebrow">Disponibilité</span>
             <h2>Parlons de votre besoin</h2>
             <p>
-              Utilisez ce formulaire pour préparer une demande. Un conseiller vous recontactera pour préciser votre
-              projet. Aucun paiement n’est demandé à cette étape.
+              Utilisez ce formulaire pour préparer une demande. Un conseiller
+              vous recontactera pour préciser votre projet. Aucun paiement n’est
+              demandé à cette étape.
             </p>
             <div className="contact-links">
-              <a href="https://www.allotogoconciergerietech-ia.com/" target="_blank" rel="noreferrer">
+              <a
+                href="https://www.allotogoconciergerietech-ia.com/"
+                target="_blank"
+                rel="noreferrer"
+              >
                 <Icon name="map" /> Site officiel Allo Togo
               </a>
               <span>
@@ -114,10 +119,15 @@ function ContactPage() {
                 <Icon name="check" size={30} />
                 <h2>Demande enregistrée</h2>
                 <p>
-                  Votre demande a bien été enregistrée sous la référence <strong>{sent.reference}</strong>. Un conseiller
-                  vous recontactera.
+                  Votre demande a bien été enregistrée sous la référence{" "}
+                  <strong>{sent.reference}</strong>. Un conseiller vous
+                  recontactera.
                 </p>
-                <button type="button" className="secondary" onClick={() => setSent(null)}>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setSent(null)}
+                >
                   Nouvelle demande
                 </button>
               </div>
@@ -127,16 +137,33 @@ function ContactPage() {
                 <div className="form-row">
                   <label>
                     Votre nom
-                    <input required name="name" placeholder="Ex. Ama Mensah" minLength={2} maxLength={120} />
+                    <input
+                      required
+                      name="name"
+                      placeholder="Ex. Ama Mensah"
+                      minLength={2}
+                      maxLength={120}
+                    />
                   </label>
                   <label>
                     Téléphone
-                    <input required name="phone" placeholder="+228 •• •• •• ••" minLength={6} maxLength={30} inputMode="tel" />
+                    <input
+                      required
+                      name="phone"
+                      placeholder="+228 •• •• •• ••"
+                      minLength={6}
+                      maxLength={30}
+                      inputMode="tel"
+                    />
                   </label>
                 </div>
                 <label>
                   Email facultatif
-                  <input type="email" name="email" placeholder="nom@exemple.com" />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="nom@exemple.com"
+                  />
                 </label>
                 <label>
                   Votre message
@@ -149,10 +176,18 @@ function ContactPage() {
                     rows={4}
                   />
                 </label>
-                <button className="primary wide" type="submit" disabled={submitting}>
-                  {submitting ? 'Envoi…' : 'Envoyer ma demande'} <Icon name="arrow" />
+                <button
+                  className="primary wide"
+                  type="submit"
+                  disabled={submitting}
+                >
+                  {submitting ? "Envoi…" : "Envoyer ma demande"}{" "}
+                  <Icon name="arrow" />
                 </button>
-                <small>En envoyant ce formulaire, vous acceptez d’être recontacté au sujet de votre demande.</small>
+                <small>
+                  En envoyant ce formulaire, vous acceptez d’être recontacté au
+                  sujet de votre demande.
+                </small>
               </>
             )}
           </form>

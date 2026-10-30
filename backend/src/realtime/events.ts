@@ -1,9 +1,9 @@
-import { EventEmitter } from 'node:events'
+import { EventEmitter } from "node:events"
 
 export type RealtimeMessage = {
   orderId: string
   conversationId: string
-  visibility: 'CLIENT' | 'INTERNAL'
+  visibility: "CLIENT" | "INTERNAL"
   message: {
     id: string
     authorType: string

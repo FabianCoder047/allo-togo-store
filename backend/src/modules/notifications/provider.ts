@@ -8,11 +8,13 @@ export type OutgoingNotification = {
 
 export interface NotificationProvider {
   readonly name: string
-  send(notification: OutgoingNotification): Promise<{ providerMessageId: string }>
+  send(notification: OutgoingNotification): Promise<{
+    providerMessageId: string
+  }>
 }
 
 export class SimulatedWhatsAppProvider implements NotificationProvider {
-  readonly name = 'simulated'
+  readonly name = "simulated"
 
   async send(notification: OutgoingNotification) {
     // Ce mode est explicitement simulé : aucun message réel n'est envoyé.
@@ -25,7 +27,7 @@ export class SimulatedWhatsAppProvider implements NotificationProvider {
 }
 
 export class HttpWhatsAppProvider implements NotificationProvider {
-  readonly name = 'http'
+  readonly name = "http"
 
   constructor(
     private readonly apiUrl: string,
@@ -35,9 +37,9 @@ export class HttpWhatsAppProvider implements NotificationProvider {
 
   async send(notification: OutgoingNotification) {
     const response = await fetch(this.apiUrl, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'content-type': 'application/json',
+        "content-type": "application/json",
         authorization: `Bearer ${this.token}`,
       },
       body: JSON.stringify({
@@ -50,14 +52,18 @@ export class HttpWhatsAppProvider implements NotificationProvider {
     if (!response.ok) {
       throw new Error(`Le fournisseur WhatsApp a répondu ${response.status}`)
     }
-    const body = (await response.json().catch(() => ({}))) as { id?: string; messageId?: string }
-    return { providerMessageId: body.id ?? body.messageId ?? `http-${notification.id}` }
+    const body = (await response.json().catch(() => ({}))) as {
+      id?: string
+      messageId?: string
+    }
+    return {
+      providerMessageId: body.id ?? body.messageId ?? `http-${notification.id}`,
+    }
   }
 }
 
-
 export class SimulatedSmsProvider implements NotificationProvider {
-  readonly name = 'simulated'
+  readonly name = "simulated"
 
   async send(notification: OutgoingNotification) {
     // Ce mode est explicitement simulé : aucun SMS réel n'est envoyé.
@@ -70,7 +76,7 @@ export class SimulatedSmsProvider implements NotificationProvider {
 }
 
 export class HttpSmsProvider implements NotificationProvider {
-  readonly name = 'http'
+  readonly name = "http"
 
   constructor(
     private readonly apiUrl: string,
@@ -80,21 +86,29 @@ export class HttpSmsProvider implements NotificationProvider {
 
   async send(notification: OutgoingNotification) {
     const response = await fetch(this.apiUrl, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'content-type': 'application/json',
+        "content-type": "application/json",
         authorization: `Bearer ${this.token}`,
       },
       body: JSON.stringify({
         to: notification.recipient,
         from: this.sender,
-        message: (notification.payload as { message?: string } | null)?.message ?? notification.template,
+        message:
+          (notification.payload as { message?: string } | null)?.message ??
+          notification.template,
       }),
     })
     if (!response.ok) {
       throw new Error(`Le fournisseur SMS a répondu ${response.status}`)
     }
-    const body = (await response.json().catch(() => ({}))) as { id?: string; messageId?: string }
-    return { providerMessageId: body.id ?? body.messageId ?? `http-sms-${notification.id}` }
+    const body = (await response.json().catch(() => ({}))) as {
+      id?: string
+      messageId?: string
+    }
+    return {
+      providerMessageId:
+        body.id ?? body.messageId ?? `http-sms-${notification.id}`,
+    }
   }
 }

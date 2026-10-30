@@ -11,7 +11,7 @@ export function productPriceForQuantity(
   quantity: number,
 ): number {
   const tiers = product.wholesalePrices ?? []
-  if (tiers.length > 0 && tiers.every((tier) => !('maxQuantity' in tier))) {
+  if (tiers.length > 0 && tiers.every((tier) => !("maxQuantity" in tier))) {
     return (
       tiers
         .filter((tier) => quantity >= tier.minQuantity)
@@ -25,7 +25,6 @@ export function productPriceForQuantity(
       (tier) =>
         quantity >= tier.minQuantity &&
         (tier.maxQuantity == null || quantity <= tier.maxQuantity),
-    )?.unitPrice ??
-    product.price
+    )?.unitPrice ?? product.price
   )
 }

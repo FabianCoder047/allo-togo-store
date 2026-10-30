@@ -1,28 +1,44 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from "@prisma/client"
 
-const databaseUrl = process.env.DATABASE_URL ?? ''
+const databaseUrl = process.env.DATABASE_URL ?? ""
 const prisma = new PrismaClient()
 
 const main = async () => {
-  if (process.env.NODE_ENV !== 'development') {
-    throw new Error(`NODE_ENV=${process.env.NODE_ENV} : nettoyage interdit hors développement.`)
+  if (process.env.NODE_ENV !== "development") {
+    throw new Error(
+      `NODE_ENV=${process.env.NODE_ENV} : nettoyage interdit hors développement.`,
+    )
   }
-  if (!/localhost|127\.0\.0\.1/.test(databaseUrl) || !databaseUrl.includes(':5433')) {
+  if (
+    !/localhost|127\.0\.0\.1/.test(databaseUrl) ||
+    !databaseUrl.includes(":5433")
+  ) {
     throw new Error(`Base non locale de développement : ${databaseUrl}`)
   }
 
   const orders = await prisma.order.findMany({
-    select: { id: true, orderNumber: true, customerName: true, customerPhone: true, status: true },
-    orderBy: { createdAt: 'asc' },
+    select: {
+      id: true,
+      orderNumber: true,
+      customerName: true,
+      customerPhone: true,
+      status: true,
+    },
+    orderBy: { createdAt: "asc" },
   })
   const suspicious = orders.filter(
-    (order) => !order.customerName.startsWith('Smoke Test ') || !order.customerPhone.startsWith('+228990'),
+    (order) =>
+      !order.customerName.startsWith("Smoke Test ") ||
+      !order.customerPhone.startsWith("+228990"),
   )
   if (suspicious.length > 0) {
     throw new Error(
       `Commandes non identifiées comme données de test : ${suspicious
-        .map((order) => `${order.orderNumber}/${order.customerName}/${order.customerPhone}`)
-        .join(', ')}`,
+        .map(
+          (order) =>
+            `${order.orderNumber}/${order.customerName}/${order.customerPhone}`,
+        )
+        .join(", ")}`,
     )
   }
 
@@ -35,7 +51,10 @@ const main = async () => {
     groups: await prisma.orderGroup.count(),
   }
   console.log(`Commandes de test à supprimer : ${orders.length}`)
-  for (const order of orders) console.log(`- ${order.orderNumber} | ${order.status} | ${order.customerName}`)
+  for (const order of orders)
+    console.log(
+      `- ${order.orderNumber} | ${order.status} | ${order.customerName}`,
+    )
 
   const ids = orders.map((order) => order.id)
   await prisma.$transaction(async (tx) => {
@@ -61,8 +80,8 @@ const main = async () => {
     messages: await prisma.message.count(),
     trackingAccess: await prisma.trackingAccess.count(),
   }
-  console.log('AVANT', JSON.stringify(before))
-  console.log('APRÈS', JSON.stringify(after))
+  console.log("AVANT", JSON.stringify(before))
+  console.log("APRÈS", JSON.stringify(after))
 
   if (
     after.users !== before.users ||
@@ -70,7 +89,7 @@ const main = async () => {
     after.categories !== before.categories ||
     after.settings !== before.settings
   ) {
-    throw new Error('Des données protégées ont été modifiées : arrêt immédiat.')
+    throw new Error("Des données protégées ont été modifiées : arrêt immédiat.")
   }
 }
 

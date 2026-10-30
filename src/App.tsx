@@ -143,7 +143,10 @@ export default function App() {
             <button className="topbar-link" onClick={() => navigate("/suivi")}>
               Suivre ma commande <Icon name="map" size={15} />
             </button>
-            <button className="topbar-link" onClick={() => navigate("/encaissement")}>
+            <button
+              className="topbar-link"
+              onClick={() => navigate("/encaissement")}
+            >
               Encaissement espèces <Icon name="bag" size={15} />
             </button>
             <button className="topbar-link" onClick={() => setChatOpen(true)}>
@@ -277,12 +280,16 @@ export default function App() {
             <button onClick={() => navigate("/staff")}>
               Espace intervenant
             </button>
-            <button onClick={() => navigate("/admin")}>Espace de gestion</button>
+            <button onClick={() => navigate("/admin")}>
+              Espace de gestion
+            </button>
           </div>
         </div>
         <div className="shell footer-bottom">
           <span>© 2026 Allo Togo Store. Tous droits réservés.</span>
-          <span>Paiement à la livraison, au retrait ou en agence, avant validation.</span>
+          <span>
+            Paiement à la livraison, au retrait ou en agence, avant validation.
+          </span>
         </div>
       </footer>
 
@@ -382,7 +389,10 @@ export default function App() {
                   <span>Total produits</span>
                   <strong>{formatPrice(cartSubtotal)}</strong>
                 </div>
-                <p>Paiement à la livraison, au retrait ou en agence, avant validation.</p>
+                <p>
+                  Paiement à la livraison, au retrait ou en agence, avant
+                  validation.
+                </p>
                 <button
                   className="primary wide"
                   onClick={() => navigate("/panier")}

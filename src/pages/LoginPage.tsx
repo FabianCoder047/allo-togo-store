@@ -1,18 +1,18 @@
-import { useState } from 'react'
-import { Icon } from '../components/Icon'
-import { useStore } from '../context/StoreContext'
-import { errorMessage } from '../lib/api'
-import { roleLabels } from '../lib/labels'
-import type { StaffUser } from '../types'
+import { useState } from "react"
+import { Icon } from "../components/Icon"
+import { useStore } from "../context/StoreContext"
+import { errorMessage } from "../lib/api"
+import { roleLabels } from "../lib/labels"
+import type { StaffUser } from "../types"
 
-export const homeForRole = (role: StaffUser['role']): string =>
-  role === 'TECHNICIAN' || role === 'DELIVERY' ? '/staff' : '/admin'
+export const homeForRole = (role: StaffUser["role"]): string =>
+  role === "TECHNICIAN" || role === "DELIVERY" ? "/staff" : "/admin"
 
 export function LoginPage({
   area,
   navigate,
 }: {
-  area: 'admin' | 'staff'
+  area: "admin" | "staff"
   navigate: (path: string) => void
 }) {
   const { login, user } = useStore()
@@ -26,7 +26,10 @@ export function LoginPage({
     setSubmitting(true)
     setError(null)
     try {
-      const logged = await login(String(form.get('email') ?? ''), String(form.get('password') ?? ''))
+      const logged = await login(
+        String(form.get("email") ?? ""),
+        String(form.get("password") ?? ""),
+      )
       navigate(homeForRole(logged.role))
     } catch (err) {
       setError(errorMessage(err))
@@ -46,22 +49,29 @@ export function LoginPage({
             />
             <span>
               <strong>ALLO TOGO</strong>
-              <small>{area === 'admin' ? 'DIRECTION' : 'INTERVENANT'}</small>
+              <small>{area === "admin" ? "DIRECTION" : "INTERVENANT"}</small>
             </span>
           </div>
           <span className="eyebrow">Espace réservé</span>
-          <h1>{area === 'admin' ? 'Espace de gestion' : 'Espace intervenant'}</h1>
+          <h1>
+            {area === "admin" ? "Espace de gestion" : "Espace intervenant"}
+          </h1>
           <p>
-            {area === 'admin'
-              ? 'Connectez-vous pour piloter l’activité, suivre les commandes ou superviser l’infrastructure du site.'
-              : 'Connectez-vous pour consulter vos missions, mettre à jour l’avancement et échanger avec le client.'}
+            {area === "admin"
+              ? "Connectez-vous pour piloter l’activité, suivre les commandes ou superviser l’infrastructure du site."
+              : "Connectez-vous pour consulter vos missions, mettre à jour l’avancement et échanger avec le client."}
           </p>
         </div>
         <form className="login-form" onSubmit={submit}>
           {user && (
             <div className="alert info">
-              Vous êtes déjà connecté en tant que <strong>{user.name}</strong> ({roleLabels[user.role]}).{' '}
-              <button type="button" className="text-link inline" onClick={() => navigate(homeForRole(user.role))}>
+              Vous êtes déjà connecté en tant que <strong>{user.name}</strong> (
+              {roleLabels[user.role]}).{" "}
+              <button
+                type="button"
+                className="text-link inline"
+                onClick={() => navigate(homeForRole(user.role))}
+              >
                 Ouvrir mon espace
               </button>
             </div>
@@ -71,19 +81,35 @@ export function LoginPage({
             Email professionnel
             <span className="login-input-wrap">
               <Icon name="mail" size={18} />
-              <input type="email" name="email" required autoComplete="username" placeholder="nom@allotogo.test" />
+              <input
+                type="email"
+                name="email"
+                required
+                autoComplete="username"
+                placeholder="nom@allotogo.test"
+              />
             </span>
           </label>
           <label>
             Mot de passe
             <span className="login-input-wrap">
               <Icon name="lock" size={18} />
-              <input type={showPassword ? "text" : "password"} name="password" required autoComplete="current-password" minLength={6} />
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                required
+                autoComplete="current-password"
+                minLength={6}
+              />
               <button
                 type="button"
                 className="login-password-toggle"
                 onClick={() => setShowPassword((visible) => !visible)}
-                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                aria-label={
+                  showPassword
+                    ? "Masquer le mot de passe"
+                    : "Afficher le mot de passe"
+                }
                 aria-pressed={showPassword}
               >
                 <Icon name={showPassword ? "eyeOff" : "eye"} size={18} />
@@ -91,14 +117,18 @@ export function LoginPage({
             </span>
           </label>
           <button className="primary wide" type="submit" disabled={submitting}>
-            {submitting ? 'Connexion…' : 'Se connecter'} <Icon name="arrow" />
+            {submitting ? "Connexion…" : "Se connecter"} <Icon name="arrow" />
           </button>
           <p className="login-forgot-password">
             <a href="/forgot-password" className="forgot-link">
               Réinitialiser mon mot de passe
             </a>
           </p>
-          <button type="button" className="back-link" onClick={() => navigate('/')}>
+          <button
+            type="button"
+            className="back-link"
+            onClick={() => navigate("/")}
+          >
             <Icon name="arrow" /> Retour à la boutique
           </button>
         </form>

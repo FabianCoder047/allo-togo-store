@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react"
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" platform: string }>
 }
 
 export function PwaControls() {
-  const [installPrompt, setInstallPrompt] =
-    useState<InstallPromptEvent | null>(null)
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(
+    null,
+  )
   const [installError, setInstallError] = useState<string | null>(null)
   const [dismissed, setDismissed] = useState(false)
   const [isIos, setIsIos] = useState(false)
@@ -112,7 +113,9 @@ export function PwaControls() {
       if (choice.outcome === "accepted") setDismissed(true)
       setInstallPrompt(null)
     } catch {
-      setInstallError("L’installation n’a pas pu démarrer. Réessayez depuis votre navigateur.")
+      setInstallError(
+        "L’installation n’a pas pu démarrer. Réessayez depuis votre navigateur.",
+      )
     }
   }
 
@@ -140,13 +143,12 @@ export function PwaControls() {
               ? "Dans Safari, touchez Partager puis « Sur l’écran d’accueil »."
               : "Installez la boutique sur votre appareil pour la retrouver facilement."}
         </span>
-        {installError && <span className="pwa-controls-error">{installError}</span>}
+        {installError && (
+          <span className="pwa-controls-error">{installError}</span>
+        )}
       </div>
       {needRefresh ? (
-        <button
-          className="pwa-controls-action"
-          onClick={update}
-        >
+        <button className="pwa-controls-action" onClick={update}>
           Actualiser
         </button>
       ) : installPrompt ? (

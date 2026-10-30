@@ -1,7 +1,7 @@
-import request from 'supertest'
-import type { Response } from 'supertest'
-import { createApp } from '../../src/app.js'
-import { prisma } from '../../src/db/prisma.js'
+import request from "supertest"
+import type { Response } from "supertest"
+import { createApp } from "../../src/app.js"
+import { prisma } from "../../src/db/prisma.js"
 
 export const app = createApp()
 export const client = () => request(app)
@@ -22,30 +22,50 @@ export type CheckoutOrder = {
   id: string
   orderNumber: string
   trackingCode: string
-  categoryType: 'GPS' | 'DRINK'
+  categoryType: "GPS" | "DRINK"
   status: string
-  fulfillmentMode: 'LIVRAISON' | 'RETRAIT_AGENCE'
+  fulfillmentMode: "LIVRAISON" | "RETRAIT_AGENCE"
   requiresTechnician: boolean
   subtotal: number
   deliveryFee: number
   total: number
-  items: Array<{ productName: string; quantity: number; unitPrice: number; lineTotal: number }>
+  items: Array<{
+    productName: string
+    quantity: number
+    unitPrice: number
+    lineTotal: number
+  }>
 }
 
 export type CheckoutResult = {
   groupRef: string
-  customer: { name: string; phone: string; whatsapp: string | null; email: string | null }
+  customer: {
+    name: string
+    phone: string
+    whatsapp: string | null
+    email: string | null
+  }
   orders: CheckoutOrder[]
 }
 
 export const bearer = (token: string) => ({ Authorization: `Bearer ${token}` })
 
-export const login = async (email: string, password: string): Promise<Session> => {
-  const response = await client().post('/api/auth/login').send({ email, password })
+export const login = async (
+  email: string,
+  password: string,
+): Promise<Session> => {
+  const response = await client()
+    .post("/api/auth/login")
+    .send({ email, password })
   if (response.status !== 200) {
-    throw new Error(`Connexion impossible (${response.status}) : ${JSON.stringify(response.body)}`)
+    throw new Error(
+      `Connexion impossible (${response.status}) : ${JSON.stringify(response.body)}`,
+    )
   }
-  const data = response.body.data as { accessToken: string; user: Session['user'] }
+  const data = response.body.data as {
+    accessToken: string
+    user: Session["user"]
+  }
   return { token: data.accessToken, user: data.user }
 }
 
@@ -56,7 +76,7 @@ export const nextPhone = () => {
 }
 
 export type CheckoutOptions = {
-  fulfillmentMode?: 'LIVRAISON' | 'RETRAIT_AGENCE'
+  fulfillmentMode?: "LIVRAISON" | "RETRAIT_AGENCE"
   requiresTechnician?: boolean
   phone?: string
   customerName?: string
@@ -64,40 +84,45 @@ export type CheckoutOptions = {
 }
 
 export const checkout = async (
-  items: Array<{ productId: string; quantity: number }>,
+  items: Array<{ productId: string quantity: number }>,
   options: CheckoutOptions = {},
 ): Promise<CheckoutResult> => {
   const response = await client()
-    .post('/api/orders')
+    .post("/api/orders")
     .send({
       customer: {
-        name: options.customerName ?? 'Client Test',
+        name: options.customerName ?? "Client Test",
         phone: options.phone ?? nextPhone(),
         whatsapp: null,
         email: null,
       },
-      fulfillmentMode: options.fulfillmentMode ?? 'LIVRAISON',
+      fulfillmentMode: options.fulfillmentMode ?? "LIVRAISON",
       delivery: {
-        zone: 'Lomé',
-        address: 'Rue de test, quartier Bè, Lomé',
+        zone: "Lomé",
+        address: "Rue de test, quartier Bè, Lomé",
         instructions: null,
         contactPhone: null,
         latitude: 6.1319,
         longitude: 1.2228,
-        mapUrl: 'https://www.google.com/maps?q=6.1319,1.2228',
+        mapUrl: "https://www.google.com/maps?q=6.1319,1.2228",
       },
       requiresTechnician: options.requiresTechnician ?? false,
       items,
       ...(options.extra ?? {}),
     })
   if (response.status !== 201) {
-    throw new Error(`Création de commande impossible (${response.status}) : ${JSON.stringify(response.body)}`)
+    throw new Error(
+      `Création de commande impossible (${response.status}) : ${JSON.stringify(response.body)}`,
+    )
   }
   return response.body.data as CheckoutResult
 }
 
 export const confirmOrder = (orderId: string, token: string) =>
-  client().post(`/api/orders/${orderId}/confirm`).set(bearer(token)).send({ comment: 'Confirmation téléphonique de test.' })
+  client()
+    .post(`/api/orders/${orderId}/confirm`)
+    .set(bearer(token))
+    .send({ comment: "Confirmation téléphonique de test." })
 
 export const assignTeam = (
   orderId: string,
@@ -120,22 +145,38 @@ export const assignOrder = (
 ) => assignTeam(orderId, token, [staffId], leadStaffId, instructions)
 
 export const startCourse = (orderId: string, token: string, comment?: string) =>
-  client().post(`/api/orders/${orderId}/start`).set(bearer(token)).send({ comment })
+  client()
+    .post(`/api/orders/${orderId}/start`)
+    .set(bearer(token))
+    .send({ comment })
 
-export const deliverOrder = (orderId: string, token: string, comment?: string) =>
-  client().post(`/api/orders/${orderId}/deliver`).set(bearer(token)).send({ comment })
+export const deliverOrder = (
+  orderId: string,
+  token: string,
+  comment?: string,
+) =>
+  client()
+    .post(`/api/orders/${orderId}/deliver`)
+    .set(bearer(token))
+    .send({ comment })
 
 export const failOrder = (orderId: string, token: string, comment: string) =>
-  client().post(`/api/orders/${orderId}/fail`).set(bearer(token)).send({ comment })
+  client()
+    .post(`/api/orders/${orderId}/fail`)
+    .set(bearer(token))
+    .send({ comment })
 
 export const pickupOrder = (orderId: string, token: string, comment?: string) =>
-  client().post(`/api/orders/${orderId}/pickup`).set(bearer(token)).send({ comment })
+  client()
+    .post(`/api/orders/${orderId}/pickup`)
+    .set(bearer(token))
+    .send({ comment })
 
 export const recordPayment = (
   orderId: string,
   token: string,
   amount: number,
-  method = 'ESPECES',
+  method = "ESPECES",
   idempotencyKey?: string,
 ) =>
   client()
@@ -146,9 +187,15 @@ export const recordPayment = (
 export const getOrder = (orderId: string, token: string) =>
   client().get(`/api/orders/${orderId}`).set(bearer(token))
 
-export const assertStatus = (response: Response, expected: number, label: string) => {
+export const assertStatus = (
+  response: Response,
+  expected: number,
+  label: string,
+) => {
   if (response.status !== expected) {
-    throw new Error(`${label} : statut ${response.status} au lieu de ${expected} — ${JSON.stringify(response.body)}`)
+    throw new Error(
+      `${label} : statut ${response.status} au lieu de ${expected} — ${JSON.stringify(response.body)}`,
+    )
   }
 }
 

@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react'
-import { Icon, type IconName } from './Icon'
-import { BRAND_LOGO } from '../lib/brand'
-import { initials } from '../lib/format'
+import type { ReactNode } from "react"
+import { Icon, type IconName } from "./Icon"
+import { BRAND_LOGO } from "../lib/brand"
+import { initials } from "../lib/format"
 
 export interface DashboardNavItem {
   id: string
@@ -29,7 +29,11 @@ export function DashboardMobileBar({
 }) {
   return (
     <header className="dashboard-mobile-bar">
-      <button className="brand" onClick={onHome} aria-label={`Allo Togo ${area}, retour à la boutique`}>
+      <button
+        className="brand"
+        onClick={onHome}
+        aria-label={`Allo Togo ${area}, retour à la boutique`}
+      >
         <img src={BRAND_LOGO} alt="" />
         <span>
           <strong>ALLO TOGO</strong>
@@ -41,10 +45,18 @@ export function DashboardMobileBar({
         <span className="dashboard-mobile-user" title={userName}>
           {initials(userName)}
         </span>
-        <button className="icon-btn" onClick={onHome} aria-label="Voir la boutique">
+        <button
+          className="icon-btn"
+          onClick={onHome}
+          aria-label="Voir la boutique"
+        >
           <Icon name="home" size={19} />
         </button>
-        <button className="icon-btn" onClick={onLogout} aria-label="Se déconnecter">
+        <button
+          className="icon-btn"
+          onClick={onLogout}
+          aria-label="Se déconnecter"
+        >
           <Icon name="logout" size={19} />
         </button>
       </div>
@@ -73,9 +85,9 @@ export function DashboardBottomNav({
       {items.map((item) => (
         <button
           key={item.id}
-          className={active === item.id ? 'active' : ''}
+          className={active === item.id ? "active" : ""}
           onClick={() => onSelect(item.id)}
-          aria-current={active === item.id ? 'page' : undefined}
+          aria-current={active === item.id ? "page" : undefined}
         >
           <span>
             <Icon name={item.icon} size={20} />

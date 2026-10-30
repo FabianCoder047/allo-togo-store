@@ -1,9 +1,10 @@
-import { prisma } from '../../db/prisma.js'
-import { env } from '../../config/env.js'
-import { emailMode } from '../notifications/email.js'
-import { notificationMode } from '../notifications/service.js'
+import { prisma } from "../../db/prisma.js"
+import { env } from "../../config/env.js"
+import { emailMode } from "../notifications/email.js"
+import { notificationMode } from "../notifications/service.js"
 
-const hoursAgo = (hours: number) => new Date(Date.now() - hours * 60 * 60 * 1000)
+const hoursAgo = (hours: number) =>
+  new Date(Date.now() - hours * 60 * 60 * 1000)
 
 /**
  * Vue technique réservée au Directeur et à l'informaticien.
@@ -18,7 +19,9 @@ export const getInfrastructureOverview = async () => {
   const weekAgo = hoursAgo(24 * 7)
   const startedAt = Date.now()
 
-  const databaseProbe = await prisma.$queryRaw<Array<{ ok: number }>>`SELECT 1 AS ok`
+  const databaseProbe = await prisma.$queryRaw<Array<{
+    ok: number
+  }>>`SELECT 1 AS ok`
   const databaseLatencyMs = Date.now() - startedAt
 
   const [
@@ -42,7 +45,7 @@ export const getInfrastructureOverview = async () => {
     }),
     prisma.user.count(),
     prisma.user.groupBy({
-      by: ['role'],
+      by: ["role"],
       where: { active: true },
       _count: { _all: true },
     }),
@@ -50,10 +53,10 @@ export const getInfrastructureOverview = async () => {
     prisma.product.count(),
     prisma.category.count({ where: { active: true } }),
     prisma.auditLog.count({
-      where: { action: 'AUTH_LOGIN', createdAt: { gte: dayAgo } },
+      where: { action: "AUTH_LOGIN", createdAt: { gte: dayAgo } },
     }),
     prisma.auditLog.count({
-      where: { action: 'AUTH_LOGIN', createdAt: { gte: weekAgo } },
+      where: { action: "AUTH_LOGIN", createdAt: { gte: weekAgo } },
     }),
     prisma.order.count({ where: { createdAt: { gte: dayAgo } } }),
     prisma.order.count({ where: { createdAt: { gte: weekAgo } } }),
@@ -68,7 +71,7 @@ export const getInfrastructureOverview = async () => {
       nodeVersion: process.version,
       uptimeSeconds: Math.floor(process.uptime()),
       database: {
-        status: databaseProbe.length > 0 ? ('ok' as const) : ('degraded' as const),
+        status: databaseProbe.length > 0 ? "ok" as const : "degraded" as const,
         latencyMs: databaseLatencyMs,
       },
       memory: {
@@ -109,6 +112,4 @@ export const getInfrastructureOverview = async () => {
   }
 }
 
-export type InfrastructureOverview = Awaited<
-  ReturnType<typeof getInfrastructureOverview>
->
+export type InfrastructureOverview = Awaited<ReturnType<typeof getInfrastructureOverview>>

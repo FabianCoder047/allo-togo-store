@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { Icon } from './Icon'
+import type { ReactNode } from "react"
+import { Icon } from "./Icon"
 import {
   orderStatusLabel,
   orderStatusLabels,
@@ -8,7 +8,7 @@ import {
   paymentStatusLabels,
   statusTone,
   terminalOrderStatuses,
-} from '../lib/labels'
+} from "../lib/labels"
 
 export function PageHero({
   eyebrow,
@@ -29,15 +29,15 @@ export function PageHero({
 }) {
   return (
     <section className="page-hero">
-      <div className={`shell ${image ? 'page-hero-grid' : ''}`}>
+      <div className={`shell ${image ? "page-hero-grid" : ""}`}>
         <div className="page-hero-copy">
           <span className="eyebrow">{eyebrow}</span>
           <h1>{title}</h1>
           <p>{text}</p>
         </div>
         {image && (
-          <div className={`page-hero-visual ${imageClassName ?? ''}`}>
-            <img src={image} alt={imageAlt ?? ''} />
+          <div className={`page-hero-visual ${imageClassName ?? ""}`}>
+            <img src={image} alt={imageAlt ?? ""} />
             {badge && <span className="page-hero-badge">{badge}</span>}
           </div>
         )}
@@ -58,7 +58,7 @@ export function SectionTitle({
   center?: boolean
 }) {
   return (
-    <div className={`section-heading ${center ? 'center' : ''}`}>
+    <div className={`section-heading ${center ? "center" : ""}`}>
       <span className="eyebrow">{eyebrow}</span>
       <h2>{title}</h2>
       {text && <p>{text}</p>}
@@ -68,21 +68,23 @@ export function SectionTitle({
 
 export function StatusBadge({
   status,
-  kind = 'order',
+  kind = "order",
   fulfillmentMode,
 }: {
   status: string
-  kind?: 'order' | 'operational' | 'payment' | 'quote'
+  kind?: "order" | "operational" | "payment" | "quote"
   fulfillmentMode?: string
 }) {
   const label =
-    kind === 'order'
+    kind === "order"
       ? orderStatusLabel(status, fulfillmentMode)
-      : kind === 'operational'
+      : kind === "operational"
         ? (operationalStatusLabels[status] ?? status)
-        : kind === 'payment'
+        : kind === "payment"
           ? (paymentStatusLabels[status] ?? status)
-          : (orderStatusLabels[status] ?? operationalStatusLabels[status] ?? status)
+          : (orderStatusLabels[status] ??
+            operationalStatusLabels[status] ??
+            status)
   return <span className={`status ${statusTone(status)}`}>{label}</span>
 }
 
@@ -105,27 +107,39 @@ export function OrderProgress({
 }) {
   const steps = orderStatusSteps(fulfillmentMode)
   const reached = new Set([...reachedStatuses, status])
-  const negativeTerminal = ['ECHEC_LIVRAISON', 'REJETEE', 'ANNULEE'].includes(status)
+  const negativeTerminal = ["ECHEC_LIVRAISON", "REJETEE", "ANNULEE"].includes(
+    status,
+  )
   const isTerminal = terminalOrderStatuses.includes(status)
   const currentIndex = steps.indexOf(status)
-  const reachedIndex = steps.reduce((max, step, index) => (reached.has(step) ? index : max), 0)
+  const reachedIndex = steps.reduce(
+    (max, step, index) => (reached.has(step) ? index : max),
+    0,
+  )
   // Pour un statut négatif, on n'affiche que les étapes réellement franchies :
   // afficher la suite en jaune laisserait croire que le parcours continue.
-  const visibleSteps = negativeTerminal ? steps.slice(0, reachedIndex + 1) : steps
+  const visibleSteps = negativeTerminal
+    ? steps.slice(0, reachedIndex + 1)
+    : steps
 
   return (
     <div className="order-progress" aria-label="Progression de la commande">
       <ol>
         {visibleSteps.map((step) => {
           const index = steps.indexOf(step)
-          const delivered = status === 'LIVREE'
-          const current = delivered ? step === 'LIVREE' : !negativeTerminal && index === currentIndex
-          const previous = !current && (delivered || negativeTerminal || index < currentIndex)
+          const delivered = status === "LIVREE"
+          const current = delivered
+            ? step === "LIVREE"
+            : !negativeTerminal && index === currentIndex
+          const previous =
+            !current && (delivered || negativeTerminal || index < currentIndex)
           return (
             <li
               key={step}
-              className={current ? 'current' : previous ? 'previous' : 'upcoming'}
-              aria-current={current ? 'step' : undefined}
+              className={
+                current ? "current" : previous ? "previous" : "upcoming"
+              }
+              aria-current={current ? "step" : undefined}
             >
               <span className="order-progress-badge">
                 <span className="order-progress-dot" />
@@ -144,7 +158,7 @@ export function OrderProgress({
   )
 }
 
-export function LoadingState({ label = 'Chargement…' }: { label?: string }) {
+export function LoadingState({ label = "Chargement…" }: { label?: string }) {
   return (
     <div className="state-block">
       <span className="spinner" aria-hidden="true" />
@@ -153,7 +167,13 @@ export function LoadingState({ label = 'Chargement…' }: { label?: string }) {
   )
 }
 
-export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+export function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string
+  onRetry?: () => void
+}) {
   return (
     <div className="state-block error">
       <Icon name="shield" size={28} />
@@ -189,7 +209,13 @@ export function EmptyState({
   )
 }
 
-export function Alert({ tone = 'info', children }: { tone?: 'info' | 'success' | 'error' | 'warning'; children: ReactNode }) {
+export function Alert({
+  tone = "info",
+  children,
+}: {
+  tone?: "info" | "success" | "error" | "warning"
+  children: ReactNode
+}) {
   return <div className={`alert ${tone}`}>{children}</div>
 }
 

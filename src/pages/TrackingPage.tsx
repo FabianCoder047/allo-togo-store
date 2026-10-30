@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, MouseEvent } from "react"
 import { Icon } from "../components/Icon"
+import { jsPDF } from "jspdf"
 import { ChatComposer, ChatMessageList } from "../components/Chat"
 import {
   PageHero,
@@ -308,6 +309,78 @@ export function TrackingPage({
     )
   }
 
+  function downloadPDF(event: MouseEvent<HTMLButtonElement>): void {
+    if (!tracking) return
+
+    const doc = new jsPDF()
+
+    // Header
+    doc.setFontSize(18)
+    doc.setTextColor(30, 60, 110)
+    doc.text("Allo Togo - Suivi de commande", 14, 20)
+
+    // Order number
+    doc.setFontSize(14)
+    doc.setTextColor(60, 60, 60)
+    doc.text(`Référence: ${tracking.orderNumber}`, 14, 35)
+
+    // Tracking code
+    doc.text(`Code de suivi: ${tracking.trackingCode}`, 14, 48)
+
+    // Status
+    doc.text(`Statut: ${tracking.status}`, 14, 61)
+
+    // Fulfillment mode
+    const fulfillmentLabel =
+      fulfillmentLabels[tracking.fulfillmentMode] || tracking.fulfillmentMode
+    doc.text(`Mode: ${fulfillmentLabel}`, 14, 74)
+
+    // Items
+    let y = 87
+    doc.setFontSize(11)
+    tracking.items.forEach((item, index) => {
+      if (y > 270) {
+        doc.addPage()
+        y = 20
+      }
+      doc.text(
+        `${item.productName} × ${item.quantity} - ${formatPrice(item.lineTotal)}`,
+        14,
+        y,
+      )
+      y += 10
+    })
+
+    // Total
+    doc.setFontSize(12)
+    doc.setFont("helvetica", "bold")
+    doc.text(
+      `Total: ${formatPrice(tracking.total)}`,
+      14,
+      y + 5,
+    )
+
+    // Timeline
+    y = y + 15
+    doc.setFontSize(11)
+    doc.setFont("helvetica", "normal")
+    tracking.timeline.forEach((entry, index) => {
+      if (y > 270) {
+        doc.addPage()
+        y = 20
+      }
+      doc.text(
+        `${formatDate(entry.createdAt)} - ${entry.statusLabel}`,
+        14,
+        y,
+      )
+      y += 8
+    })
+
+    // Download
+    doc.save(`allotogo-${tracking.trackingCode}.pdf`)
+  }
+
   return (
     <main>
       <section className="tracking-hero">
@@ -349,6 +422,13 @@ export function TrackingPage({
               <span>Code de suivi</span>
               <strong>{tracking.trackingCode}</strong>
               <small>Conservez ce code pour revenir à tout moment.</small>
+              <button
+                className="download-pdf-btn"
+                onClick={downloadPDF}
+                title="Télécharger le PDF"
+              >
+                <Icon name="download" size={14} /> PDF
+              </button>
             </div>
           </div>
         </div>
@@ -405,10 +485,15 @@ export function TrackingPage({
                         <p>
                           {tracking.customerPaymentChoice === "ESPECES"
                             ? "Votre choix espèces a été enregistré. Le chef d’équipe doit confirmer la remise sur place pour finaliser la livraison. Veuillez patienter…"
-                            : `Votre paiement ${tracking.customerPaymentChoice === "FLOOZ" ? "Flooz" : "Mixx by Yas"} a été déclaré. Envoyez la capture dans la messagerie ci-dessous. Le chef d’équipe validera la livraison après vérification. Veuillez patienter…`}
+                            : `Votre paiement ${
+                                tracking.customerPaymentChoice === "FLOOZ"
+                                  ? "Flooz"
+                                  : "Mixx by Yas"
+                              } a été déclaré. Envoyez la capture dans la messagerie ci-dessous. Le chef d’équipe validera la livraison après vérification. Veuillez patienter…`}
                         </p>
                         <small>
-                          Choisi le {formatDate(tracking.customerPaymentChoiceAt)}
+                          Choisi le{" "}
+                          {formatDate(tracking.customerPaymentChoiceAt)}
                         </small>
                       </div>
                     ) : (

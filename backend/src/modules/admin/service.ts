@@ -1,13 +1,17 @@
-import type { StaffRole } from '@prisma/client'
-import { prisma } from '../../db/prisma.js'
-import { logger } from '../../config/logger.js'
-import { conflict, notFound, serviceUnavailable } from '../../lib/errors.js'
-import { generateTemporaryPassword } from '../../lib/ids.js'
-import { hashPassword, revokeAllSessions } from '../auth/service.js'
-import { audit } from '../audit/service.js'
-import { sendStaffCredentialsEmail } from '../notifications/email.js'
-import type { z } from 'zod'
-import type { resetPasswordSchema, userCreateSchema, userUpdateSchema } from './schemas.js'
+import type { StaffRole } from "@prisma/client"
+import { prisma } from "../../db/prisma.js"
+import { logger } from "../../config/logger.js"
+import { conflict, notFound, serviceUnavailable } from "../../lib/errors.js"
+import { generateTemporaryPassword } from "../../lib/ids.js"
+import { hashPassword, revokeAllSessions } from "../auth/service.js"
+import { audit } from "../audit/service.js"
+import { sendStaffCredentialsEmail } from "../notifications/email.js"
+import type { z } from "zod"
+import type {
+  resetPasswordSchema,
+  userCreateSchema,
+  userUpdateSchema,
+} from "./schemas.js"
 
 const publicUserSelect = {
   id: true,
@@ -23,14 +27,16 @@ const publicUserSelect = {
   createdAt: true,
 } as const
 
-export const listUsers = async (options: { role?: StaffRole; includeInactive?: boolean } = {}) => {
+export const listUsers = async (
+  options: { role?: StaffRole includeInactive?: boolean } = {},
+) => {
   return prisma.user.findMany({
     where: {
       ...(options.role ? { role: options.role } : {}),
       ...(options.includeInactive ? {} : { active: true }),
     },
     select: publicUserSelect,
-    orderBy: [{ role: 'asc' }, { name: 'asc' }],
+    orderBy: [{ role: "asc" }, { name: "asc" }],
   })
 }
 
@@ -40,7 +46,7 @@ export const listUsers = async (options: { role?: StaffRole; includeInactive?: b
  */
 const splitFullName = (fullName: string) => {
   const name = fullName.trim()
-  const separator = name.indexOf(' ')
+  const separator = name.indexOf(" ")
   if (separator < 0) return { firstName: name, lastName: null }
   return {
     firstName: name.slice(0, separator),
@@ -50,13 +56,13 @@ const splitFullName = (fullName: string) => {
 
 export const createUser = async (
   input: z.infer<typeof userCreateSchema>,
-  actor: { id: string; name: string },
+  actor: { id: string name: string },
   ip?: string,
   userAgent?: string,
 ) => {
   const email = input.email.toLowerCase().trim()
   const exists = await prisma.user.findUnique({ where: { email } })
-  if (exists) throw conflict('Un compte utilise déjà cette adresse email.')
+  if (exists) throw conflict("Un compte utilise déjà cette adresse email.")
 
   const temporaryPassword = generateTemporaryPassword(6)
   const fullName = input.name.trim()
@@ -81,27 +87,34 @@ export const createUser = async (
       temporaryPassword,
     })
   } catch (error) {
-    logger.error({ err: error, email: user.email }, 'Échec de l’envoi des identifiants du nouveau compte')
+    logger.error(
+      { err: error, email: user.email },
+      "Échec de l’envoi des identifiants du nouveau compte",
+    )
     try {
       await prisma.user.delete({ where: { id: user.id } })
     } catch (cleanupError) {
       logger.error(
         { err: cleanupError, userId: user.id },
-        'Impossible de supprimer le compte après l’échec de l’email',
+        "Impossible de supprimer le compte après l’échec de l’email",
       )
     }
     throw serviceUnavailable(
-      'Le compte n’a pas été créé : l’email contenant le mot de passe provisoire n’a pas pu être envoyé. Vérifiez la configuration email puis réessayez.',
+      "Le compte n’a pas été créé : l’email contenant le mot de passe provisoire n’a pas pu être envoyé. Vérifiez la configuration email puis réessayez.",
     )
   }
 
   await audit({
     actorId: actor.id,
-    actorType: 'STAFF',
-    action: 'USER_CREATED',
-    entity: 'User',
+    actorType: "STAFF",
+    action: "USER_CREATED",
+    entity: "User",
     entityId: user.id,
-    metadata: { email: user.email, role: user.role, credentialsEmailSent: true },
+    metadata: {
+      email: user.email,
+      role: user.role,
+      credentialsEmailSent: true,
+    },
     ip,
     userAgent,
   })
@@ -111,7 +124,7 @@ export const createUser = async (
 export const updateUser = async (
   id: string,
   input: z.infer<typeof userUpdateSchema>,
-  actor: { id: string; name: string },
+  actor: { id: string name: string },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -119,24 +132,32 @@ export const updateUser = async (
     where: { id },
     select: publicUserSelect,
   })
-  if (!existing) throw notFound('Compte introuvable.')
+  if (!existing) throw notFound("Compte introuvable.")
   if (existing.id === actor.id && input.active === false) {
-    throw conflict('Vous ne pouvez pas désactiver votre propre compte.')
+    throw conflict("Vous ne pouvez pas désactiver votre propre compte.")
   }
   if (existing.id === actor.id && input.role && input.role !== existing.role) {
-    throw conflict('Vous ne pouvez pas modifier votre propre rôle.')
+    throw conflict("Vous ne pouvez pas modifier votre propre rôle.")
   }
   const email = input.email?.toLowerCase().trim()
   if (email && email !== existing.email) {
-    const emailOwner = await prisma.user.findUnique({ where: { email }, select: { id: true } })
-    if (emailOwner) throw conflict('Un compte utilise déjà cette adresse email.')
+    const emailOwner = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    })
+    if (emailOwner)
+      throw conflict("Un compte utilise déjà cette adresse email.")
   }
   const user = await prisma.user.update({
     where: { id },
     data: {
-      ...(input.name ? { name: input.name.trim(), ...splitFullName(input.name) } : {}),
+      ...(input.name
+        ? { name: input.name.trim(), ...splitFullName(input.name) }
+        : {}),
       ...(email ? { email } : {}),
-      ...(input.phone !== undefined ? { phone: input.phone?.trim() || null } : {}),
+      ...(input.phone !== undefined
+        ? { phone: input.phone?.trim() || null }
+        : {}),
       ...(input.role ? { role: input.role } : {}),
       ...(input.active !== undefined ? { active: input.active } : {}),
     },
@@ -147,9 +168,9 @@ export const updateUser = async (
   }
   await audit({
     actorId: actor.id,
-    actorType: 'STAFF',
-    action: 'USER_UPDATED',
-    entity: 'User',
+    actorType: "STAFF",
+    action: "USER_UPDATED",
+    entity: "User",
     entityId: id,
     metadata: input,
     ip,
@@ -160,16 +181,17 @@ export const updateUser = async (
 
 export const deactivateUser = async (
   id: string,
-  actor: { id: string; name: string },
+  actor: { id: string name: string },
   ip?: string,
   userAgent?: string,
 ) => {
-  if (id === actor.id) throw conflict('Vous ne pouvez pas supprimer votre propre compte.')
+  if (id === actor.id)
+    throw conflict("Vous ne pouvez pas supprimer votre propre compte.")
   const existing = await prisma.user.findUnique({
     where: { id },
     select: publicUserSelect,
   })
-  if (!existing) throw notFound('Compte introuvable.')
+  if (!existing) throw notFound("Compte introuvable.")
   if (!existing.active) return existing
 
   const user = await prisma.user.update({
@@ -180,9 +202,9 @@ export const deactivateUser = async (
   await revokeAllSessions(id)
   await audit({
     actorId: actor.id,
-    actorType: 'STAFF',
-    action: 'USER_DEACTIVATED',
-    entity: 'User',
+    actorType: "STAFF",
+    action: "USER_DEACTIVATED",
+    entity: "User",
     entityId: id,
     metadata: { email: existing.email },
     ip,
@@ -194,12 +216,12 @@ export const deactivateUser = async (
 export const resetUserPassword = async (
   id: string,
   input: z.infer<typeof resetPasswordSchema>,
-  actor: { id: string; name: string },
+  actor: { id: string name: string },
   ip?: string,
   userAgent?: string,
 ) => {
   const existing = await prisma.user.findUnique({ where: { id } })
-  if (!existing) throw notFound('Compte introuvable.')
+  if (!existing) throw notFound("Compte introuvable.")
   await prisma.user.update({
     where: { id },
     data: {
@@ -210,9 +232,9 @@ export const resetUserPassword = async (
   await revokeAllSessions(id)
   await audit({
     actorId: actor.id,
-    actorType: 'STAFF',
-    action: 'USER_PASSWORD_RESET',
-    entity: 'User',
+    actorType: "STAFF",
+    action: "USER_PASSWORD_RESET",
+    entity: "User",
     entityId: id,
     ip,
     userAgent,
@@ -222,9 +244,9 @@ export const resetUserPassword = async (
 
 export const listStaffMembers = async () => {
   return prisma.user.findMany({
-    where: { active: true, role: { in: ['TECHNICIAN', 'DELIVERY'] } },
+    where: { active: true, role: { in: ["TECHNICIAN", "DELIVERY"] } },
     select: { id: true, name: true, role: true, phone: true },
-    orderBy: [{ role: 'asc' }, { name: 'asc' }],
+    orderBy: [{ role: "asc" }, { name: "asc" }],
   })
 }
 
@@ -252,11 +274,18 @@ export const listPayments = async (query: {
     prisma.payment.count({ where }),
     prisma.payment.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,
       include: {
-        order: { select: { id: true, orderNumber: true, trackingCode: true, categoryType: true } },
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
+            trackingCode: true,
+            categoryType: true,
+          },
+        },
         receivedBy: { select: { id: true, name: true } },
       },
     }),
@@ -265,7 +294,12 @@ export const listPayments = async (query: {
   return {
     data,
     totalAmount: aggregate._sum.amount ?? 0,
-    pagination: { page: query.page, pageSize: query.pageSize, total, totalPages: Math.ceil(total / query.pageSize) },
+    pagination: {
+      page: query.page,
+      pageSize: query.pageSize,
+      total,
+      totalPages: Math.ceil(total / query.pageSize),
+    },
   }
 }
 
@@ -293,11 +327,19 @@ export const listAuditLogs = async (query: {
     prisma.auditLog.count({ where }),
     prisma.auditLog.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,
       include: { actor: { select: { id: true, name: true, role: true } } },
     }),
   ])
-  return { data, pagination: { page: query.page, pageSize: query.pageSize, total, totalPages: Math.ceil(total / query.pageSize) } }
+  return {
+    data,
+    pagination: {
+      page: query.page,
+      pageSize: query.pageSize,
+      total,
+      totalPages: Math.ceil(total / query.pageSize),
+    },
+  }
 }

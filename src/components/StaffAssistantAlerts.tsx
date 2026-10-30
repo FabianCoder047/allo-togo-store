@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import { Icon } from './Icon'
-import { useStore } from '../context/StoreContext'
-import { api } from '../lib/api'
-import { getStaffSocket } from '../lib/realtime'
+import { useEffect, useRef, useState } from "react"
+import { Icon } from "./Icon"
+import { useStore } from "../context/StoreContext"
+import { api } from "../lib/api"
+import { getStaffSocket } from "../lib/realtime"
 
 type StaffAlert = {
   key: string
@@ -19,14 +19,16 @@ type RealtimeAlert = {
   createdAt?: string
 }
 
-const DISMISSED_KEY = 'allo.assistant.dismissed.v1'
+const DISMISSED_KEY = "allo.assistant.dismissed.v1"
 
 const readDismissed = (): string[] => {
   try {
     const raw = window.localStorage.getItem(DISMISSED_KEY)
     if (!raw) return []
     const parsed: unknown = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : []
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : []
   } catch {
     return []
   }
@@ -35,18 +37,25 @@ const readDismissed = (): string[] => {
 const rememberDismissed = (key: string) => {
   try {
     const current = readDismissed().filter((item) => item !== key)
-    window.localStorage.setItem(DISMISSED_KEY, JSON.stringify([key, ...current].slice(0, 50)))
+    window.localStorage.setItem(
+      DISMISSED_KEY,
+      JSON.stringify([key, ...current].slice(0, 50)),
+    )
   } catch {
     // Le stockage local peut être désactivé : le bandeau reste fonctionnel.
   }
 }
 
-export function StaffAssistantAlerts({ navigate }: { navigate: (path: string) => void }) {
+export function StaffAssistantAlerts({
+  navigate,
+}: {
+  navigate: (path: string) => void
+}) {
   const { user } = useStore()
   const [alert, setAlert] = useState<StaffAlert | null>(null)
   const audioRef = useRef<AudioContext | null>(null)
 
-  const isAllowed = user?.role === 'DIRECTOR' || user?.role === 'COMMERCIAL'
+  const isAllowed = user?.role === "DIRECTOR" || user?.role === "COMMERCIAL"
 
   useEffect(() => {
     if (!isAllowed) return
@@ -60,7 +69,8 @@ export function StaffAssistantAlerts({ navigate }: { navigate: (path: string) =>
           audioRef.current = new AudioContextClass()
         }
         const context = audioRef.current
-        if (context.state === 'suspended') void context.resume().catch(() => undefined)
+        if (context.state === "suspended")
+          void context.resume().catch(() => undefined)
         // Lecture d'un buffer muet : confirme l'autorisation audio (Chrome, Safari).
         const buffer = context.createBuffer(1, 1, context.sampleRate)
         const source = context.createBufferSource()
@@ -71,11 +81,11 @@ export function StaffAssistantAlerts({ navigate }: { navigate: (path: string) =>
         // Certains navigateurs bloquent l'audio sans interaction : le bandeau suffit.
       }
     }
-    window.addEventListener('pointerdown', unlock, { once: true })
-    window.addEventListener('keydown', unlock, { once: true })
+    window.addEventListener("pointerdown", unlock, { once: true })
+    window.addEventListener("keydown", unlock, { once: true })
     return () => {
-      window.removeEventListener('pointerdown', unlock)
-      window.removeEventListener('keydown', unlock)
+      window.removeEventListener("pointerdown", unlock)
+      window.removeEventListener("keydown", unlock)
     }
   }, [isAllowed])
 
@@ -95,8 +105,10 @@ export function StaffAssistantAlerts({ navigate }: { navigate: (path: string) =>
         setAlert({
           key: latest.payload?.reference ?? latest.id,
           reference: latest.payload?.reference,
-          threadId: latest.assistantThreadId ?? latest.payload?.threadId ?? undefined,
-          customerMessage: latest.payload?.customerMessage ?? 'Un client attend une réponse.',
+          threadId:
+            latest.assistantThreadId ?? latest.payload?.threadId ?? undefined,
+          customerMessage:
+            latest.payload?.customerMessage ?? "Un client attend une réponse.",
           createdAt: latest.payload?.createdAt ?? latest.createdAt,
         })
       })
@@ -123,7 +135,7 @@ export function StaffAssistantAlerts({ navigate }: { navigate: (path: string) =>
         const beep = (offset: number, frequency: number) => {
           const oscillator = context.createOscillator()
           const gain = context.createGain()
-          oscillator.type = 'sine'
+          oscillator.type = "sine"
           oscillator.frequency.value = frequency
           gain.gain.setValueAtTime(0.0001, start + offset)
           gain.gain.exponentialRampToValueAtTime(0.16, start + offset + 0.02)
@@ -136,16 +148,20 @@ export function StaffAssistantAlerts({ navigate }: { navigate: (path: string) =>
         beep(0, 880)
         beep(0.24, 1175)
       }
-      if (context.state === 'suspended') {
+      if (context.state === "suspended") {
         if (!navigator.userActivation?.isActive) return
-        void context.resume().then(schedule).catch(() => undefined)
+        void context
+          .resume()
+          .then(schedule)
+          .catch(() => undefined)
         return
       }
       schedule()
     }
 
     const onEscalation = (payload: RealtimeAlert) => {
-      const customerMessage = payload.customerMessage?.trim() || 'Un client attend une réponse.'
+      const customerMessage =
+        payload.customerMessage?.trim() || "Un client attend une réponse."
       setAlert({
         key: payload.reference ?? `${Date.now()}`,
         reference: payload.reference,
@@ -156,9 +172,9 @@ export function StaffAssistantAlerts({ navigate }: { navigate: (path: string) =>
       playAlert()
     }
 
-    socket.on('assistant:escalation', onEscalation)
+    socket.on("assistant:escalation", onEscalation)
     return () => {
-      socket.off('assistant:escalation', onEscalation)
+      socket.off("assistant:escalation", onEscalation)
     }
   }, [isAllowed])
 
@@ -168,13 +184,19 @@ export function StaffAssistantAlerts({ navigate }: { navigate: (path: string) =>
     rememberDismissed(alert.key)
     setAlert(null)
     const detail = { threadId: alert.threadId, reference: alert.reference }
-    const eventName = alert.threadId || alert.reference ? 'allo:open-assistant-thread' : 'allo:open-assistant-alerts'
-    if (window.location.pathname === '/admin') {
+    const eventName =
+      alert.threadId || alert.reference
+        ? "allo:open-assistant-thread"
+        : "allo:open-assistant-alerts"
+    if (window.location.pathname === "/admin") {
       window.dispatchEvent(new CustomEvent(eventName, { detail }))
       return
     }
-    navigate('/admin')
-    window.setTimeout(() => window.dispatchEvent(new CustomEvent(eventName, { detail })), 400)
+    navigate("/admin")
+    window.setTimeout(
+      () => window.dispatchEvent(new CustomEvent(eventName, { detail })),
+      400,
+    )
   }
 
   const dismiss = () => {
@@ -191,17 +213,21 @@ export function StaffAssistantAlerts({ navigate }: { navigate: (path: string) =>
         <strong>Message client non résolu</strong>
         <span>{alert.customerMessage}</span>
         <small>
-          {alert.reference ? `Réf. ${alert.reference}` : 'Assistant Allo Togo'}
+          {alert.reference ? `Réf. ${alert.reference}` : "Assistant Allo Togo"}
           {alert.createdAt
-            ? ` · ${new Date(alert.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
-            : ''}
+            ? ` · ${new Date(alert.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`
+            : ""}
         </small>
       </div>
       <div className="staff-assistant-alert-actions">
         <button className="primary small" onClick={openAlerts}>
           Répondre
         </button>
-        <button className="icon-btn" onClick={dismiss} aria-label="Fermer l’alerte">
+        <button
+          className="icon-btn"
+          onClick={dismiss}
+          aria-label="Fermer l’alerte"
+        >
           <Icon name="x" size={16} />
         </button>
       </div>

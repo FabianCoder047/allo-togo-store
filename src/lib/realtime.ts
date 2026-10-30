@@ -1,5 +1,5 @@
-import { io, type Socket } from 'socket.io-client'
-import { getAccessToken } from './api'
+import { io, type Socket } from "socket.io-client"
+import { getAccessToken } from "./api"
 
 let socket: Socket | null = null
 let socketToken: string | null = null
@@ -21,9 +21,9 @@ export const getStaffSocket = (): Socket | null => {
   socket?.disconnect()
   socketToken = token
   socket = io({
-    path: '/socket.io',
+    path: "/socket.io",
     auth: { token },
-    transports: ['websocket', 'polling'],
+    transports: ["websocket", "polling"],
     reconnectionDelayMax: 10_000,
   })
   return socket

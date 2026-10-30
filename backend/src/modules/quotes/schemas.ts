@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from "zod"
 
 export const quoteCreateSchema = z.object({
   name: z.string().min(2).max(120),
@@ -6,15 +6,22 @@ export const quoteCreateSchema = z.object({
     .string()
     .min(6)
     .max(30)
-    .regex(/^[+0-9 ().-]+$/, 'Numéro de téléphone invalide.'),
-  email: z.string().email().max(160).optional().or(z.literal('')).nullable(),
+    .regex(/^[+0-9 ().-]+$/, "Numéro de téléphone invalide."),
+  email: z.string().email().max(160).optional().or(z.literal("")).nullable(),
   serviceId: z.string().optional().nullable(),
   message: z.string().min(10).max(4000),
 })
 
 export const quoteUpdateSchema = z.object({
   status: z
-    .enum(['NOUVELLE', 'EN_COURS_DE_TRAITEMENT', 'DEVIS_ENVOYE', 'ACCEPTEE', 'REFUSEE', 'CLOTUREE'])
+    .enum([
+      "NOUVELLE",
+      "EN_COURS_DE_TRAITEMENT",
+      "DEVIS_ENVOYE",
+      "ACCEPTEE",
+      "REFUSEE",
+      "CLOTUREE",
+    ])
     .optional(),
   assignedToId: z.string().nullable().optional(),
   adminNotes: z.string().max(4000).nullable().optional(),

@@ -1,10 +1,10 @@
-import { useState, type FormEvent } from 'react'
-import { Icon } from '../components/Icon'
-import { ProductCard } from '../components/ProductCard'
-import { Alert, SectionTitle, LoadingState, ErrorState } from '../components/ui'
-import { useStore } from '../context/StoreContext'
-import { api, errorMessage } from '../lib/api'
-import { trackEvent } from '../lib/analytics'
+import { useState, type FormEvent } from "react"
+import { Icon } from "../components/Icon"
+import { ProductCard } from "../components/ProductCard"
+import { Alert, SectionTitle, LoadingState, ErrorState } from "../components/ui"
+import { useStore } from "../context/StoreContext"
+import { api, errorMessage } from "../lib/api"
+import { trackEvent } from "../lib/analytics"
 
 export function HomePage({
   navigate,
@@ -15,8 +15,16 @@ export function HomePage({
   scrollTo: (id: string) => void
   onAdvisor: () => void
 }) {
-  const { products, services, loadingCatalog, catalogError, reloadCatalog, addToCart, notify } = useStore()
-  const gps = products.filter((product) => product.type === 'GPS').slice(0, 4)
+  const {
+    products,
+    services,
+    loadingCatalog,
+    catalogError,
+    reloadCatalog,
+    addToCart,
+    notify,
+  } = useStore()
+  const gps = products.filter((product) => product.type === "GPS").slice(0, 4)
   const visibleServices = services.slice(0, 4)
   const [sent, setSent] = useState<{ reference: string } | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -24,25 +32,25 @@ export function HomePage({
 
   const add = (id: string, name: string) => {
     addToCart(id)
-    notify(`${name} ajouté au panier.`, 'success')
+    notify(`${name} ajouté au panier.`, "success")
   }
 
   const submitContact = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
-    const need = String(form.get('need') ?? '').trim()
-    const details = String(form.get('message') ?? '').trim()
+    const need = String(form.get("need") ?? "").trim()
+    const details = String(form.get("message") ?? "").trim()
     setSubmitting(true)
     setContactError(null)
     try {
       const quote = await api.quotes.create({
-        name: String(form.get('name') ?? ''),
-        phone: String(form.get('phone') ?? ''),
-        email: String(form.get('email') ?? '') || null,
+        name: String(form.get("name") ?? ""),
+        phone: String(form.get("phone") ?? ""),
+        email: String(form.get("email") ?? "") || null,
         message: need ? `Besoin : ${need}\n\n${details}` : details,
       })
       setSent({ reference: quote.reference })
-      trackEvent('quote_requested', { source: 'home' })
+      trackEvent("quote_requested", { source: "home" })
     } catch (err) {
       setContactError(errorMessage(err))
     } finally {
@@ -62,13 +70,14 @@ export function HomePage({
               Gardez le contrôle de vos véhicules, <em>où que vous soyez.</em>
             </h1>
             <p>
-              Découvrez les solutions de géolocalisation Allo Togo et choisissez le traceur adapté à vos besoins.
+              Découvrez les solutions de géolocalisation Allo Togo et choisissez
+              le traceur adapté à vos besoins.
             </p>
             <div className="hero-actions">
-              <button className="primary" onClick={() => scrollTo('traceurs')}>
+              <button className="primary" onClick={() => scrollTo("traceurs")}>
                 Découvrir nos traceurs <Icon name="arrow" />
               </button>
-              <button className="secondary" onClick={() => scrollTo('contact')}>
+              <button className="secondary" onClick={() => scrollTo("contact")}>
                 Demander une démonstration
               </button>
             </div>
@@ -119,14 +128,30 @@ export function HomePage({
       <section className="benefits">
         <div className="shell benefits-grid">
           {[
-            ['tracker', 'Localisation du véhicule', 'Consultez la position selon les capacités du modèle choisi.'],
-            ['shield', 'Protection & alertes', 'Des options à confirmer en fonction de chaque appareil.'],
-            ['fleet', 'Suivi pour professionnels', 'Des solutions pour taxis, activités mobiles et flottes.'],
-            ['headset', 'Conseil & installation', 'Nous vous guidons vers la configuration adaptée.'],
+            [
+              "tracker",
+              "Localisation du véhicule",
+              "Consultez la position selon les capacités du modèle choisi.",
+            ],
+            [
+              "shield",
+              "Protection & alertes",
+              "Des options à confirmer en fonction de chaque appareil.",
+            ],
+            [
+              "fleet",
+              "Suivi pour professionnels",
+              "Des solutions pour taxis, activités mobiles et flottes.",
+            ],
+            [
+              "headset",
+              "Conseil & installation",
+              "Nous vous guidons vers la configuration adaptée.",
+            ],
           ].map(([icon, title, text]) => (
             <article className="benefit" key={title}>
               <div className="icon-box">
-                <Icon name={icon as 'map'} />
+                <Icon name={icon as "map"} />
               </div>
               <div>
                 <h3>{title}</h3>
@@ -145,21 +170,24 @@ export function HomePage({
               title="Les traceurs GPS Allo Togo"
               text="Des solutions pour mieux suivre vos véhicules. Les prix et caractéristiques seront confirmés selon le modèle."
             />
-            <button className="text-link" onClick={() => navigate('/traceurs')}>
+            <button className="text-link" onClick={() => navigate("/traceurs")}>
               Voir tous les traceurs <Icon name="arrow" />
             </button>
           </div>
           {loadingCatalog ? (
             <LoadingState label="Chargement du catalogue…" />
           ) : catalogError ? (
-            <ErrorState message={catalogError} onRetry={() => void reloadCatalog()} />
+            <ErrorState
+              message={catalogError}
+              onRetry={() => void reloadCatalog()}
+            />
           ) : (
             <div className="product-grid">
               {gps.map((product, index) => (
                 <ProductCard
                   key={product.id}
                   product={product}
-                  badge={index === 0 ? 'Le plus demandé' : undefined}
+                  badge={index === 0 ? "Le plus demandé" : undefined}
                   onAdd={() => add(product.id, product.name)}
                   onView={() => navigate(`/produit/${product.id}`)}
                 />
@@ -167,19 +195,36 @@ export function HomePage({
             </div>
           )}
           <p className="demo-note">
-            Catalogue connecté à l’API Allo Togo — disponibilités et tarifs à confirmer avant la livraison.
+            Catalogue connecté à l’API Allo Togo — disponibilités et tarifs à
+            confirmer avant la livraison.
           </p>
         </div>
       </section>
 
       <section className="section how">
         <div className="shell">
-          <SectionTitle eyebrow="Simple et accompagné" title="Comment ça marche ?" center />
+          <SectionTitle
+            eyebrow="Simple et accompagné"
+            title="Comment ça marche ?"
+            center
+          />
           <div className="steps">
             {[
-              ['01', 'Choisissez votre traceur', 'Comparez les usages et identifiez la solution adaptée à votre véhicule.'],
-              ['02', 'Passez votre commande', 'Validez avec un conseiller les modalités de livraison ou d’installation.'],
-              ['03', 'Prenez le contrôle', 'Découvrez l’utilisation et le mode de suivi propres au modèle retenu.'],
+              [
+                "01",
+                "Choisissez votre traceur",
+                "Comparez les usages et identifiez la solution adaptée à votre véhicule.",
+              ],
+              [
+                "02",
+                "Passez votre commande",
+                "Validez avec un conseiller les modalités de livraison ou d’installation.",
+              ],
+              [
+                "03",
+                "Prenez le contrôle",
+                "Découvrez l’utilisation et le mode de suivi propres au modèle retenu.",
+              ],
             ].map(([num, title, text], i) => (
               <article className="step" key={num}>
                 <div className="step-number">{num}</div>
@@ -206,14 +251,26 @@ export function HomePage({
           </div>
           <div className="use-list">
             {[
-              ['car', 'Voitures personnelles', 'Garder un œil sur votre véhicule'],
-              ['motorbike', 'Motos', 'Une solution pensée pour les deux-roues'],
-              ['user', 'Taxis & professionnels', 'Suivre les véhicules de votre activité'],
-              ['building', 'Entreprises & flottes', 'Centraliser le suivi de plusieurs véhicules'],
+              [
+                "car",
+                "Voitures personnelles",
+                "Garder un œil sur votre véhicule",
+              ],
+              ["motorbike", "Motos", "Une solution pensée pour les deux-roues"],
+              [
+                "user",
+                "Taxis & professionnels",
+                "Suivre les véhicules de votre activité",
+              ],
+              [
+                "building",
+                "Entreprises & flottes",
+                "Centraliser le suivi de plusieurs véhicules",
+              ],
             ].map(([icon, title, text]) => (
               <article key={title}>
                 <div className="use-icon">
-                  <Icon name={icon as 'car'} />
+                  <Icon name={icon as "car"} />
                 </div>
                 <div>
                   <h3>{title}</h3>
@@ -229,7 +286,10 @@ export function HomePage({
       <section className="section drinks" id="boissons">
         <div className="shell drinks-grid">
           <div className="drinks-image vitalo-image">
-            <img src="/images/products/vitalo.webp" alt="Canette Vitalo Ananas 33 cl" />
+            <img
+              src="/images/products/vitalo.webp"
+              alt="Canette Vitalo Ananas 33 cl"
+            />
             <div className="drinks-stamp">
               Vitalo
               <br />
@@ -249,7 +309,7 @@ export function HomePage({
               <span>33 cl</span>
               <span>Boisson naturelle</span>
             </div>
-            <button className="secondary" onClick={() => navigate('/boissons')}>
+            <button className="secondary" onClick={() => navigate("/boissons")}>
               Commander Vitalo <Icon name="arrow" />
             </button>
           </div>
@@ -264,18 +324,28 @@ export function HomePage({
               title="Nos services en packs"
               text="Des expertises organisées pour répondre clairement aux besoins des particuliers et des entreprises."
             />
-            <button className="text-link" onClick={() => navigate('/services')}>
+            <button className="text-link" onClick={() => navigate("/services")}>
               Tous nos services <Icon name="arrow" />
             </button>
           </div>
           <div className="service-grid">
             {visibleServices.map((service, index) => (
-              <article className={`service-card ${['orange', 'blue', 'green', 'yellow'][index % 4]}`} key={service.id}>
+              <article
+                className={`service-card ${["orange", "blue", "green", "yellow"][index % 4]}`}
+                key={service.id}
+              >
                 <div className="service-icon">
-                  <Icon name={['spark', 'headset', 'building', 'truck'][index % 4] as 'spark'} size={26} />
+                  <Icon
+                    name={
+                      ["spark", "headset", "building", "truck"][
+                        index % 4
+                      ] as "spark"
+                    }
+                    size={26}
+                  />
                 </div>
                 <h3>{service.name}</h3>
-                <p>{service.shortDescription || service.description || ''}</p>
+                <p>{service.shortDescription || service.description || ""}</p>
                 <button onClick={() => navigate(`/service/${service.id}`)}>
                   Découvrir <Icon name="arrow" size={17} />
                 </button>
@@ -293,12 +363,24 @@ export function HomePage({
           </div>
           <div className="trust-points">
             {[
-              ['check', 'Informations claires', 'Nous confirmons les caractéristiques, le prix et les conditions avant la commande.'],
-              ['headset', 'Conseil disponible', 'Un interlocuteur vous accompagne pour choisir la solution adaptée.'],
-              ['clock', 'Modalités confirmées', 'Livraison, installation et délais sont précisés selon votre commande.'],
+              [
+                "check",
+                "Informations claires",
+                "Nous confirmons les caractéristiques, le prix et les conditions avant la commande.",
+              ],
+              [
+                "headset",
+                "Conseil disponible",
+                "Un interlocuteur vous accompagne pour choisir la solution adaptée.",
+              ],
+              [
+                "clock",
+                "Modalités confirmées",
+                "Livraison, installation et délais sont précisés selon votre commande.",
+              ],
             ].map(([icon, title, text]) => (
               <article key={title}>
-                <Icon name={icon as 'check'} />
+                <Icon name={icon as "check"} />
                 <div>
                   <h3>{title}</h3>
                   <p>{text}</p>
@@ -315,10 +397,15 @@ export function HomePage({
             <span className="eyebrow">Besoin d’un conseil ?</span>
             <h2>Parlons de votre véhicule ou de votre projet.</h2>
             <p>
-              Décrivez votre besoin. L’équipe Allo Togo vous orientera vers le traceur ou le pack de services approprié.
+              Décrivez votre besoin. L’équipe Allo Togo vous orientera vers le
+              traceur ou le pack de services approprié.
             </p>
             <div className="contact-links">
-              <a href="https://www.allotogoconciergerietech-ia.com/" target="_blank" rel="noreferrer">
+              <a
+                href="https://www.allotogoconciergerietech-ia.com/"
+                target="_blank"
+                rel="noreferrer"
+              >
                 <Icon name="map" /> Site officiel Allo Togo
               </a>
               <span>
@@ -332,10 +419,15 @@ export function HomePage({
                 <Icon name="check" size={30} />
                 <h3>Demande enregistrée</h3>
                 <p>
-                  Votre demande a bien été transmise sous la référence <strong>{sent.reference}</strong>. Un conseiller
-                  vous recontactera.
+                  Votre demande a bien été transmise sous la référence{" "}
+                  <strong>{sent.reference}</strong>. Un conseiller vous
+                  recontactera.
                 </p>
-                <button type="button" className="secondary" onClick={() => setSent(null)}>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setSent(null)}
+                >
                   Nouvelle demande
                 </button>
               </div>
@@ -346,7 +438,13 @@ export function HomePage({
               <div className="form-row">
                 <label>
                   Votre nom
-                  <input required name="name" placeholder="Ex. Ama Mensah" minLength={2} maxLength={120} />
+                  <input
+                    required
+                    name="name"
+                    placeholder="Ex. Ama Mensah"
+                    minLength={2}
+                    maxLength={120}
+                  />
                 </label>
                 <label>
                   Téléphone
@@ -362,7 +460,12 @@ export function HomePage({
               </div>
               <label>
                 Email facultatif
-                <input type="email" name="email" placeholder="nom@exemple.com" maxLength={160} />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="nom@exemple.com"
+                  maxLength={160}
+                />
               </label>
               <label>
                 Votre besoin
@@ -370,10 +473,18 @@ export function HomePage({
                   <option value="" disabled>
                     Choisir une demande
                   </option>
-                  <option value="Choisir un traceur GPS">Choisir un traceur GPS</option>
-                  <option value="Demander une démonstration">Demander une démonstration</option>
-                  <option value="Demander un devis service">Demander un devis service</option>
-                  <option value="Commander des boissons">Commander des boissons</option>
+                  <option value="Choisir un traceur GPS">
+                    Choisir un traceur GPS
+                  </option>
+                  <option value="Demander une démonstration">
+                    Demander une démonstration
+                  </option>
+                  <option value="Demander un devis service">
+                    Demander un devis service
+                  </option>
+                  <option value="Commander des boissons">
+                    Commander des boissons
+                  </option>
                 </select>
               </label>
               <label>
@@ -387,10 +498,18 @@ export function HomePage({
                   rows={3}
                 />
               </label>
-              <button className="primary wide" type="submit" disabled={submitting}>
-                {submitting ? 'Envoi…' : 'Envoyer ma demande'} <Icon name="arrow" />
+              <button
+                className="primary wide"
+                type="submit"
+                disabled={submitting}
+              >
+                {submitting ? "Envoi…" : "Envoyer ma demande"}{" "}
+                <Icon name="arrow" />
               </button>
-              <small>En envoyant ce formulaire, vous acceptez d’être recontacté au sujet de votre demande.</small>
+              <small>
+                En envoyant ce formulaire, vous acceptez d’être recontacté au
+                sujet de votre demande.
+              </small>
             </form>
           )}
         </div>

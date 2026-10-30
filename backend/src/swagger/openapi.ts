@@ -105,12 +105,7 @@ export const openapi = {
           amount: { type: "integer", minimum: 1 },
           method: {
             type: "string",
-            enum: [
-              "ESPECES",
-              "FLOOZ",
-              "MIXX_BY_YAS",
-              "CARTE_BANCAIRE",
-            ],
+            enum: ["ESPECES", "FLOOZ", "MIXX_BY_YAS", "CARTE_BANCAIRE"],
           },
           reference: { type: "string" },
           idempotencyKey: { type: "string" },
@@ -175,13 +170,7 @@ export const openapi = {
           email: { type: "string", format: "email" },
           role: {
             type: "string",
-            enum: [
-              "DIRECTOR",
-              "ADMIN",
-              "COMMERCIAL",
-              "TECHNICIAN",
-              "DELIVERY",
-            ],
+            enum: ["DIRECTOR", "ADMIN", "COMMERCIAL", "TECHNICIAN", "DELIVERY"],
             description: "DIRECTOR = directeur, ADMIN = informaticien.",
           },
           phone: { type: "string", nullable: true },
@@ -205,13 +194,7 @@ export const openapi = {
           email: { type: "string", format: "email", maxLength: 160 },
           role: {
             type: "string",
-            enum: [
-              "DIRECTOR",
-              "ADMIN",
-              "COMMERCIAL",
-              "TECHNICIAN",
-              "DELIVERY",
-            ],
+            enum: ["DIRECTOR", "ADMIN", "COMMERCIAL", "TECHNICIAN", "DELIVERY"],
             description: "DIRECTOR = directeur, ADMIN = informaticien.",
           },
           phone: { type: "string", maxLength: 30, nullable: true },
@@ -427,8 +410,7 @@ export const openapi = {
       get: {
         tags: ["Assistant", "Staff"],
         security: [{ bearerAuth: [] }],
-        summary:
-          "Alertes assistant du compte DIRECTOR/COMMERCIAL connecté",
+        summary: "Alertes assistant du compte DIRECTOR/COMMERCIAL connecté",
         responses: {
           "200": { description: "OK" },
           "403": { description: "Rôle non autorisé" },

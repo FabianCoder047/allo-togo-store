@@ -245,7 +245,9 @@ export const setTrackingPaymentChoice = async (
           orderId: current.id,
           type: "PAYMENT_CHOICE_SELECTED",
           comment:
-            "Le client a choisi le paiement " + input.choice + " (mobile money). " +
+            "Le client a choisi le paiement " +
+            input.choice +
+            " (mobile money). " +
             "En attente de la capture dans le chat pour validation par le chef d'equipe.",
         },
       })

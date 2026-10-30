@@ -1,5 +1,5 @@
-import rateLimit from 'express-rate-limit'
-import { env } from '../config/env.js'
+import rateLimit from "express-rate-limit"
+import { env } from "../config/env.js"
 
 const skipInTest = () => env.isTest
 
@@ -9,7 +9,12 @@ export const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipInTest,
-  message: { error: { code: 'TOO_MANY_REQUESTS', message: 'Trop de requêtes. Réessayez dans une minute.' } },
+  message: {
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Trop de requêtes. Réessayez dans une minute.",
+    },
+  },
 })
 
 export const loginLimiter = rateLimit({
@@ -19,7 +24,12 @@ export const loginLimiter = rateLimit({
   legacyHeaders: false,
   skipSuccessfulRequests: true,
   skip: skipInTest,
-  message: { error: { code: 'TOO_MANY_REQUESTS', message: 'Trop de tentatives de connexion. Réessayez plus tard.' } },
+  message: {
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Trop de tentatives de connexion. Réessayez plus tard.",
+    },
+  },
 })
 
 export const assistantLimiter = rateLimit({
@@ -29,7 +39,11 @@ export const assistantLimiter = rateLimit({
   legacyHeaders: false,
   skip: skipInTest,
   message: {
-    error: { code: 'TOO_MANY_REQUESTS', message: 'Trop de messages envoyés à l’assistant. Réessayez dans une minute.' },
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message:
+        "Trop de messages envoyés à l’assistant. Réessayez dans une minute.",
+    },
   },
 })
 
@@ -39,7 +53,12 @@ export const trackingLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipInTest,
-  message: { error: { code: 'TOO_MANY_REQUESTS', message: 'Trop de consultations. Réessayez dans une minute.' } },
+  message: {
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Trop de consultations. Réessayez dans une minute.",
+    },
+  },
 })
 
 export const trackingAccessLimiter = rateLimit({
@@ -49,7 +68,10 @@ export const trackingAccessLimiter = rateLimit({
   legacyHeaders: false,
   skip: skipInTest,
   message: {
-    error: { code: 'TOO_MANY_REQUESTS', message: 'Trop de tentatives de vérification. Réessayez plus tard.' },
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Trop de tentatives de vérification. Réessayez plus tard.",
+    },
   },
 })
 
@@ -59,5 +81,10 @@ export const checkoutLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipInTest,
-  message: { error: { code: 'TOO_MANY_REQUESTS', message: 'Trop de commandes soumises. Réessayez plus tard.' } },
+  message: {
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Trop de commandes soumises. Réessayez plus tard.",
+    },
+  },
 })

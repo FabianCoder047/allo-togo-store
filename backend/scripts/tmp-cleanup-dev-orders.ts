@@ -4,43 +4,58 @@
  * ressemble pas à une commande de test. Ne supprime jamais utilisateurs,
  * produits, catégories ni paramètres.
  */
-import bcrypt from 'bcryptjs'
-import { PrismaClient } from '@prisma/client'
+import bcrypt from "bcryptjs"
+import { PrismaClient } from "@prisma/client"
 
-const databaseUrl = process.env.DATABASE_URL ?? ''
+const databaseUrl = process.env.DATABASE_URL ?? ""
 const prisma = new PrismaClient()
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const main = async () => {
-  if (process.env.NODE_ENV !== 'development') {
-    throw new Error(`NODE_ENV=${process.env.NODE_ENV} : nettoyage interdit hors développement.`)
+  if (process.env.NODE_ENV !== "development") {
+    throw new Error(
+      `NODE_ENV=${process.env.NODE_ENV} : nettoyage interdit hors développement.`,
+    )
   }
-  if (!/localhost|127\.0\.0\.1/.test(databaseUrl) || !databaseUrl.includes(':5433')) {
+  if (
+    !/localhost|127\.0\.0\.1/.test(databaseUrl) ||
+    !databaseUrl.includes(":5433")
+  ) {
     throw new Error(`Base non locale de développement : ${databaseUrl}`)
   }
 
   const orders = await prisma.order.findMany({
-    select: { id: true, orderNumber: true, customerName: true, customerPhone: true },
+    select: {
+      id: true,
+      orderNumber: true,
+      customerName: true,
+      customerPhone: true,
+    },
   })
-  const testNames = new Set(['Client Test', 'Client Navigateur', 'Ama Koudjo'])
+  const testNames = new Set(["Client Test", "Client Navigateur", "Ama Koudjo"])
   const suspicious = orders.filter(
     (order) =>
       !testNames.has(order.customerName) ||
-      !order.customerPhone.startsWith('+22890'),
+      !order.customerPhone.startsWith("+22890"),
   )
   if (suspicious.length > 0) {
     throw new Error(
       `Commandes non identifiées comme données de test : ${suspicious
-        .map((order) => `${order.orderNumber}/${order.customerName}/${order.customerPhone}`)
-        .join(', ')}`,
+        .map(
+          (order) =>
+            `${order.orderNumber}/${order.customerName}/${order.customerPhone}`,
+        )
+        .join(", ")}`,
     )
   }
 
   const orderIds = orders.map((order) => order.id)
   console.log(`Commandes de test à supprimer : ${orders.length}`)
   for (const order of orders) {
-    console.log(`- ${order.orderNumber} (${order.customerName}, ${order.customerPhone})`)
+    console.log(
+      `- ${order.orderNumber} (${order.customerName}, ${order.customerPhone})`,
+    )
   }
 
   const before = {
@@ -76,26 +91,32 @@ const main = async () => {
     trackingAccess: await prisma.trackingAccess.count(),
   }
 
-  console.log('AVANT', JSON.stringify(before))
-  console.log('APRÈS', JSON.stringify(after))
+  console.log("AVANT", JSON.stringify(before))
+  console.log("APRÈS", JSON.stringify(after))
 
-  if (after.users !== before.users || after.products !== before.products || after.categories !== before.categories) {
-    throw new Error('Des données protégées ont été modifiées : arrêt immédiat.')
+  if (
+    after.users !== before.users ||
+    after.products !== before.products ||
+    after.categories !== before.categories
+  ) {
+    throw new Error("Des données protégées ont été modifiées : arrêt immédiat.")
   }
 
   // Le compte de démonstration commercial manquait dans cette base de dev
   // (seed antérieur à l'ajout du rôle). On le crée sans toucher au reste.
-  const commercialEmail = 'commercial@allotogo.test'
-  const existing = await prisma.user.findUnique({ where: { email: commercialEmail } })
+  const commercialEmail = "commercial@allotogo.test"
+  const existing = await prisma.user.findUnique({
+    where: { email: commercialEmail },
+  })
   if (!existing) {
     await prisma.user.create({
       data: {
-        name: 'Esi Agent Commercial',
+        name: "Esi Agent Commercial",
         email: commercialEmail,
-        passwordHash: await bcrypt.hash('CommercialAlloTogo!2026', 12),
-        role: 'COMMERCIAL',
+        passwordHash: await bcrypt.hash("CommercialAlloTogo!2026", 12),
+        role: "COMMERCIAL",
         active: true,
-        phone: '+22890000000',
+        phone: "+22890000000",
       },
     })
     console.log(`Compte de démonstration créé : ${commercialEmail}`)

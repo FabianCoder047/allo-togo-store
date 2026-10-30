@@ -97,8 +97,8 @@ export function TechnicalLogsPanel() {
           <span className="eyebrow">Accès informaticien uniquement</span>
           <h2>Logs techniques de l’application</h2>
           <p>
-            Événements du code et du serveur, conservés pendant 30 jours.
-            Ce journal est distinct de l’audit des actions utilisateurs.
+            Événements du code et du serveur, conservés pendant 30 jours. Ce
+            journal est distinct de l’audit des actions utilisateurs.
           </p>
         </div>
         <div className="technical-logs-actions">
@@ -149,7 +149,9 @@ export function TechnicalLogsPanel() {
           >
             <option value="">Tous les niveaux</option>
             {Object.entries(levelLabels).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
+              <option key={value} value={value}>
+                {label}
+              </option>
             ))}
           </select>
         </label>
@@ -171,7 +173,9 @@ export function TechnicalLogsPanel() {
         </div>
       </div>
 
-      {filterError && <div className="technical-logs-filter-error">{filterError}</div>}
+      {filterError && (
+        <div className="technical-logs-filter-error">{filterError}</div>
+      )}
       {error && <Alert tone="error">{error}</Alert>}
       {loading ? (
         <LoadingState label="Chargement des logs techniques…" />
@@ -217,11 +221,15 @@ export function TechnicalLogsPanel() {
               >
                 Précédent
               </button>
-              <span>Page {page} sur {totalPages}</span>
+              <span>
+                Page {page} sur {totalPages}
+              </span>
               <button
                 className="secondary small"
                 disabled={page >= totalPages || loading}
-                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                onClick={() =>
+                  setPage((current) => Math.min(totalPages, current + 1))
+                }
               >
                 Suivant
               </button>

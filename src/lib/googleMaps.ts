@@ -8,9 +8,10 @@ export type DeliveryPoint = {
 
 export type DeliveryPointSelection = DeliveryPoint | null
 
-export type DeliveryPointParseResult =
-  | { ok: true; point: DeliveryPoint }
-  | { ok: false; error: string }
+export type DeliveryPointParseResult = { ok: true point: DeliveryPoint } | {
+  ok: false
+  error: string
+}
 
 const GOOGLE_MAPS_SHORT_HOSTS = new Set(["maps.app.goo.gl", "goo.gl"])
 
@@ -53,10 +54,10 @@ const toCoordinate = (value: string | undefined, min: number, max: number) => {
   return number
 }
 
-const toPair = (
-  latitude: string | undefined,
-  longitude: string | undefined,
-): { latitude: number; longitude: number } | null => {
+const toPair = (latitude: string | undefined, longitude: string | undefined): {
+  latitude: number
+  longitude: number
+} | null => {
   const lat = toCoordinate(latitude, -90, 90)
   const lng = toCoordinate(longitude, -180, 180)
   return lat !== null && lng !== null ? { latitude: lat, longitude: lng } : null
@@ -75,9 +76,10 @@ const safeDecode = (value: string) => {
  * (`maps.app.goo.gl/...`) ne contiennent pas de coordonnées : ils restent
  * acceptés, mais l’aperçu de la carte n’est alors pas disponible.
  */
-export const coordinatesFromGoogleMapsUrl = (
-  value: string,
-): { latitude: number; longitude: number } | null => {
+export const coordinatesFromGoogleMapsUrl = (value: string): {
+  latitude: number
+  longitude: number
+} | null => {
   const decoded = safeDecode(value.trim())
   const patterns: Array<RegExp> = [
     /@(-?\d+(?:[.,]\d+)?),(-?\d+(?:[.,]\d+)?)/,

@@ -22,7 +22,8 @@ export function CheckoutPage({
   const [fulfillmentMode, setFulfillmentMode] =
     useState<Fulfillment>("LIVRAISON")
   const [requiresTechnician, setRequiresTechnician] = useState(false)
-  const [paymentChoice, setPaymentChoice] = useState<"ESPECES" | "FLOOZ" | "MIXX_BY_YAS" | null>("ESPECES")
+  const [paymentChoice, setPaymentChoice] =
+    useState<"ESPECES" | "FLOOZ" | "MIXX_BY_YAS" | null>("ESPECES")
   const [deliveryPoint, setDeliveryPoint] =
     useState<DeliveryPointSelection>(null)
   const [deliveryPointError, setDeliveryPointError] = useState<string | null>(

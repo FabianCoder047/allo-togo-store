@@ -1,9 +1,13 @@
-import { Router } from 'express'
-import { z } from 'zod'
-import { asyncHandler } from '../../lib/asyncHandler.js'
-import { validate } from '../../middleware/validate.js'
-import { requireAuth, requireAnyPermission, requirePermission } from '../../middleware/auth.js'
-import { checkoutLimiter } from '../../middleware/rateLimit.js'
+import { Router } from "express"
+import { z } from "zod"
+import { asyncHandler } from "../../lib/asyncHandler.js"
+import { validate } from "../../middleware/validate.js"
+import {
+  requireAuth,
+  requireAnyPermission,
+  requirePermission,
+} from "../../middleware/auth.js"
+import { checkoutLimiter } from "../../middleware/rateLimit.js"
 import {
   addOrderNote,
   assignOrder,
@@ -20,7 +24,7 @@ import {
   rejectOrder,
   startOrderCourse,
   updateOrderStatus,
-} from './service.js'
+} from "./service.js"
 import {
   assignSchema,
   cancelOrderSchema,
@@ -32,16 +36,20 @@ import {
   paymentSchema,
   pickupSchema,
   statusUpdateSchema,
-} from './schemas.js'
+} from "./schemas.js"
 
 export const ordersRouter = Router()
 
 ordersRouter.post(
-  '/',
+  "/",
   checkoutLimiter,
   validate({ body: checkoutSchema }),
   asyncHandler(async (req, res) => {
-    const result = await createOrderGroup(req.body, req.ip, req.get('user-agent') ?? undefined)
+    const result = await createOrderGroup(
+      req.body,
+      req.ip,
+      req.get("user-agent") ?? undefined,
+    )
     res.status(201).json({
       data: {
         groupRef: result.publicRef,
@@ -72,8 +80,8 @@ ordersRouter.post(
 ordersRouter.use(requireAuth)
 
 ordersRouter.get(
-  '/',
-  requireAnyPermission('orders:read', 'orders:read:own'),
+  "/",
+  requireAnyPermission("orders:read", "orders:read:own"),
   validate({ query: orderListQuerySchema }),
   asyncHandler(async (req, res) => {
     const query = req.query as unknown as z.infer<typeof orderListQuerySchema>
@@ -89,8 +97,8 @@ ordersRouter.get(
 )
 
 ordersRouter.get(
-  '/:id',
-  requireAnyPermission('orders:read', 'orders:read:own'),
+  "/:id",
+  requireAnyPermission("orders:read", "orders:read:own"),
   asyncHandler(async (req, res) => {
     const order = await getOrderById(req.params.id, req.user!)
     res.json({ data: orderSummary(order, req.user!) })
@@ -98,8 +106,8 @@ ordersRouter.get(
 )
 
 ordersRouter.post(
-  '/:id/confirm',
-  requirePermission('orders:confirm'),
+  "/:id/confirm",
+  requirePermission("orders:confirm"),
   validate({ body: confirmOrderSchema }),
   asyncHandler(async (req, res) => {
     const order = await confirmOrder(
@@ -107,15 +115,15 @@ ordersRouter.post(
       req.body.comment,
       req.user!,
       req.ip,
-      req.get('user-agent') ?? undefined,
+      req.get("user-agent") ?? undefined,
     )
     res.json({ data: order })
   }),
 )
 
 ordersRouter.post(
-  '/:id/cancel',
-  requirePermission('orders:confirm'),
+  "/:id/cancel",
+  requirePermission("orders:confirm"),
   validate({ body: cancelOrderSchema }),
   asyncHandler(async (req, res) => {
     const order = await cancelOrder(
@@ -123,15 +131,15 @@ ordersRouter.post(
       req.body.reason,
       req.user!,
       req.ip,
-      req.get('user-agent') ?? undefined,
+      req.get("user-agent") ?? undefined,
     )
     res.json({ data: order })
   }),
 )
 
 ordersRouter.post(
-  '/:id/reject',
-  requirePermission('orders:confirm'),
+  "/:id/reject",
+  requirePermission("orders:confirm"),
   validate({ body: cancelOrderSchema }),
   asyncHandler(async (req, res) => {
     const order = await rejectOrder(
@@ -139,15 +147,15 @@ ordersRouter.post(
       req.body.reason,
       req.user!,
       req.ip,
-      req.get('user-agent') ?? undefined,
+      req.get("user-agent") ?? undefined,
     )
     res.json({ data: order })
   }),
 )
 
 ordersRouter.patch(
-  '/:id/status',
-  requirePermission('orders:status'),
+  "/:id/status",
+  requirePermission("orders:status"),
   validate({ body: statusUpdateSchema }),
   asyncHandler(async (req, res) => {
     const order = await updateOrderStatus(
@@ -155,15 +163,15 @@ ordersRouter.patch(
       req.body,
       req.user!,
       req.ip,
-      req.get('user-agent') ?? undefined,
+      req.get("user-agent") ?? undefined,
     )
     res.json({ data: order })
   }),
 )
 
 ordersRouter.post(
-  '/:id/start',
-  requirePermission('orders:update:own'),
+  "/:id/start",
+  requirePermission("orders:update:own"),
   validate({ body: confirmOrderSchema }),
   asyncHandler(async (req, res) => {
     const order = await startOrderCourse(
@@ -171,15 +179,15 @@ ordersRouter.post(
       req.body.comment,
       req.user!,
       req.ip,
-      req.get('user-agent') ?? undefined,
+      req.get("user-agent") ?? undefined,
     )
     res.json({ data: order })
   }),
 )
 
 ordersRouter.post(
-  '/:id/deliver',
-  requirePermission('orders:update:own'),
+  "/:id/deliver",
+  requirePermission("orders:update:own"),
   validate({ body: deliveryOutcomeSchema }),
   asyncHandler(async (req, res) => {
     const order = await completeOrderDelivery(
@@ -187,15 +195,15 @@ ordersRouter.post(
       req.body,
       req.user!,
       req.ip,
-      req.get('user-agent') ?? undefined,
+      req.get("user-agent") ?? undefined,
     )
     res.json({ data: order })
   }),
 )
 
 ordersRouter.post(
-  '/:id/fail',
-  requirePermission('orders:update:own'),
+  "/:id/fail",
+  requirePermission("orders:update:own"),
   validate({ body: deliveryOutcomeSchema }),
   asyncHandler(async (req, res) => {
     const order = await failOrderDelivery(
@@ -203,15 +211,15 @@ ordersRouter.post(
       req.body,
       req.user!,
       req.ip,
-      req.get('user-agent') ?? undefined,
+      req.get("user-agent") ?? undefined,
     )
     res.json({ data: order })
   }),
 )
 
 ordersRouter.post(
-  '/:id/pickup',
-  requirePermission('orders:pickup'),
+  "/:id/pickup",
+  requirePermission("orders:pickup"),
   validate({ body: pickupSchema }),
   asyncHandler(async (req, res) => {
     const order = await confirmOrderPickup(
@@ -219,15 +227,15 @@ ordersRouter.post(
       req.body,
       req.user!,
       req.ip,
-      req.get('user-agent') ?? undefined,
+      req.get("user-agent") ?? undefined,
     )
     res.json({ data: order })
   }),
 )
 
 ordersRouter.post(
-  '/:id/assign',
-  requirePermission('orders:assign'),
+  "/:id/assign",
+  requirePermission("orders:assign"),
   validate({ body: assignSchema }),
   asyncHandler(async (req, res) => {
     const assignment = await assignOrder(
@@ -235,15 +243,15 @@ ordersRouter.post(
       req.body,
       req.user!,
       req.ip,
-      req.get('user-agent') ?? undefined,
+      req.get("user-agent") ?? undefined,
     )
     res.status(201).json({ data: assignment })
   }),
 )
 
 ordersRouter.post(
-  '/:id/notes',
-  requirePermission('orders:note'),
+  "/:id/notes",
+  requirePermission("orders:note"),
   validate({ body: noteSchema }),
   asyncHandler(async (req, res) => {
     const note = await addOrderNote(
@@ -251,15 +259,15 @@ ordersRouter.post(
       req.body.body,
       req.user!,
       req.ip,
-      req.get('user-agent') ?? undefined,
+      req.get("user-agent") ?? undefined,
     )
     res.status(201).json({ data: note })
   }),
 )
 
 ordersRouter.post(
-  '/:id/payments',
-  requireAnyPermission('payments:record', 'orders:update:own'),
+  "/:id/payments",
+  requireAnyPermission("payments:record", "orders:update:own"),
   validate({ body: paymentSchema }),
   asyncHandler(async (req, res) => {
     const result = await recordPayment(
@@ -267,7 +275,7 @@ ordersRouter.post(
       req.body,
       req.user!,
       req.ip,
-      req.get('user-agent') ?? undefined,
+      req.get("user-agent") ?? undefined,
     )
     res.status(201).json({ data: result })
   }),

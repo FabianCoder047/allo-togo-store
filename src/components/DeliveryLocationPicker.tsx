@@ -152,8 +152,8 @@ export function DeliveryLocationPicker({
         </div>
       </div>
       <p className="delivery-location-help" id="delivery-map-help">
-        Dans Google Maps : appuyez longuement sur le point exact, puis
-        « Partager » → « Copier le lien ».
+        Dans Google Maps : appuyez longuement sur le point exact, puis «
+        Partager » → « Copier le lien ».
       </p>
 
       {value && (
@@ -170,7 +170,9 @@ export function DeliveryLocationPicker({
                 : "Lien de localisation prêt à être consulté"}
             </strong>
             {value.accuracy ? (
-              <small>Précision approximative : {Math.round(value.accuracy)} m</small>
+              <small>
+                Précision approximative : {Math.round(value.accuracy)} m
+              </small>
             ) : null}
           </div>
           <button

@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Icon } from './Icon'
-import { api, errorMessage } from '../lib/api'
-import type { AssistantAction, AssistantSuggestion } from '../types'
+import { useEffect, useRef, useState, type FormEvent } from "react"
+import { Icon } from "./Icon"
+import { api, errorMessage } from "../lib/api"
+import type { AssistantAction, AssistantSuggestion } from "../types"
 
 type ChatMessage = {
   id: string | number
-  role: 'client' | 'ai' | 'advisor' | 'system'
+  role: "client" | "ai" | "advisor" | "system"
   text: string
   authorName?: string
   action?: AssistantAction
@@ -15,19 +15,22 @@ type ChatMessage = {
 const initialMessages: ChatMessage[] = [
   {
     id: 1,
-    role: 'ai',
-    text: 'Bonjour, je suis l’assistant Allo Togo. Je réponds à partir du catalogue et des informations de la boutique. Si une question dépasse mes informations, je la transmets à un employé Allo Togo.',
+    role: "ai",
+    text: "Bonjour, je suis l’assistant Allo Togo. Je réponds à partir du catalogue et des informations de la boutique. Si une question dépasse mes informations, je la transmets à un employé Allo Togo.",
   },
 ]
 
 const createSessionId = () => {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID()
   }
   return `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
-const SESSION_KEY = 'allo.assistant.session.v1'
+const SESSION_KEY = "allo.assistant.session.v1"
 
 const readSessionId = () => {
   try {
@@ -51,7 +54,7 @@ export function ChatWidget({
   navigate: (path: string) => void
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
-  const [text, setText] = useState('')
+  const [text, setText] = useState("")
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sessionId] = useState(readSessionId)
@@ -75,7 +78,9 @@ export function ChatWidget({
         const thread = await api.assistant.thread(sessionId)
         if (cancelled || !thread) return
         const fresh = thread.messages.filter(
-          (message) => message.authorType === 'STAFF' && !seenAdvisorMessages.current.has(message.id),
+          (message) =>
+            message.authorType === "STAFF" &&
+            !seenAdvisorMessages.current.has(message.id),
         )
         if (fresh.length === 0) return
         fresh.forEach((message) => seenAdvisorMessages.current.add(message.id))
@@ -83,7 +88,7 @@ export function ChatWidget({
           ...current,
           ...fresh.map((message) => ({
             id: message.id,
-            role: 'advisor' as const,
+            role: "advisor" as const,
             text: message.body,
             authorName: message.authorName,
           })),
@@ -107,22 +112,32 @@ export function ChatWidget({
 
     const now = Date.now()
     const history = messages
-      .filter((message) => message.role !== 'system')
+      .filter((message) => message.role !== "system")
       .slice(-8)
-      .map((message) => ({ role: message.role === 'client' ? ('client' as const) : ('ai' as const), text: message.text }))
+      .map((message) => ({
+        role: message.role === "client" ? "client" as const : "ai" as const,
+        text: message.text,
+      }))
 
-    setMessages((current) => [...current, { id: now, role: 'client', text: value }])
-    setText('')
+    setMessages((current) => [
+      ...current,
+      { id: now, role: "client", text: value },
+    ])
+    setText("")
     setError(null)
     setSending(true)
 
     try {
-      const response = await api.assistant.ask({ message: value, sessionId, history })
+      const response = await api.assistant.ask({
+        message: value,
+        sessionId,
+        history,
+      })
       setMessages((current) => [
         ...current,
         {
           id: Date.now() + 1,
-          role: 'ai',
+          role: "ai",
           text: response.reply,
           action: response.action,
           suggestions: response.suggestions,
@@ -135,8 +150,8 @@ export function ChatWidget({
         ...current,
         {
           id: Date.now() + 1,
-          role: 'system',
-          text: 'L’assistant est momentanément indisponible. Vous pouvez contacter l’équipe via la page Contact.',
+          role: "system",
+          text: "L’assistant est momentanément indisponible. Vous pouvez contacter l’équipe via la page Contact.",
         },
       ])
     } finally {
@@ -152,11 +167,11 @@ export function ChatWidget({
   return (
     <>
       <button
-        className={`support-fab ${open ? 'open' : ''}`}
+        className={`support-fab ${open ? "open" : ""}`}
         onClick={() => setOpen(!open)}
         aria-label="Ouvrir l’assistant Allo Togo"
       >
-        <Icon name={open ? 'x' : 'chat'} size={25} />
+        <Icon name={open ? "x" : "chat"} size={25} />
         <span>Besoin d’aide ?</span>
       </button>
       {open && (
@@ -173,7 +188,11 @@ export function ChatWidget({
                 </small>
               </span>
             </div>
-            <button className="icon-btn" onClick={() => setOpen(false)} aria-label="Fermer">
+            <button
+              className="icon-btn"
+              onClick={() => setOpen(false)}
+              aria-label="Fermer"
+            >
               <Icon name="x" />
             </button>
           </header>
@@ -190,17 +209,20 @@ export function ChatWidget({
           </div>
           <div className="chat-thread" ref={threadRef} aria-live="polite">
             {messages.map((message) =>
-              message.role === 'system' ? (
+              message.role === "system" ? (
                 <div className="system-message" key={message.id}>
                   <Icon name="check" size={13} />
                   {message.text}
                 </div>
               ) : (
-                <div className={`chat-message ${message.role}`} key={message.id}>
+                <div
+                  className={`chat-message ${message.role}`}
+                  key={message.id}
+                >
                   <div className="chat-avatar">
-                    {message.role === 'ai' ? (
+                    {message.role === "ai" ? (
                       <Icon name="spark" size={15} />
-                    ) : message.role === 'advisor' ? (
+                    ) : message.role === "advisor" ? (
                       <Icon name="headset" size={15} />
                     ) : (
                       <Icon name="user" size={15} />
@@ -208,15 +230,21 @@ export function ChatWidget({
                   </div>
                   <div>
                     <span className="chat-author">
-                      {message.role === 'ai'
-                        ? 'Assistant Allo Togo'
-                        : message.role === 'advisor'
-                          ? message.authorName || 'Employé Allo Togo'
-                          : 'Vous'}
-                      <b>{message.role === 'ai' ? 'IA' : message.role === 'advisor' ? 'Équipe' : 'Client'}</b>
+                      {message.role === "ai"
+                        ? "Assistant Allo Togo"
+                        : message.role === "advisor"
+                          ? message.authorName || "Employé Allo Togo"
+                          : "Vous"}
+                      <b>
+                        {message.role === "ai"
+                          ? "IA"
+                          : message.role === "advisor"
+                            ? "Équipe"
+                            : "Client"}
+                      </b>
                     </span>
                     <p>{message.text}</p>
-                    {message.action === 'ESCALATE' && (
+                    {message.action === "ESCALATE" && (
                       <span className="chat-escalation">
                         <Icon name="headset" size={11} /> Transmis à un employé
                       </span>
@@ -224,7 +252,10 @@ export function ChatWidget({
                     {message.suggestions && message.suggestions.length > 0 && (
                       <div className="chat-suggestions">
                         {message.suggestions.map((suggestion) => (
-                          <button key={`${message.id}-${suggestion.path}`} onClick={() => go(suggestion.path)}>
+                          <button
+                            key={`${message.id}-${suggestion.path}`}
+                            onClick={() => go(suggestion.path)}
+                          >
                             {suggestion.label} <Icon name="arrow" size={11} />
                           </button>
                         ))}
@@ -245,13 +276,13 @@ export function ChatWidget({
           </div>
           {error && <div className="chat-error">{error}</div>}
           <div className="chat-quick-links">
-            <button onClick={() => go('/suivi')}>
+            <button onClick={() => go("/suivi")}>
               <Icon name="map" size={14} /> Suivre une commande
             </button>
-            <button onClick={() => go('/services')}>
+            <button onClick={() => go("/services")}>
               <Icon name="spark" size={14} /> Demander un devis
             </button>
-            <button onClick={() => go('/contact')}>
+            <button onClick={() => go("/contact")}>
               <Icon name="headset" size={14} /> Contacter l’équipe
             </button>
           </div>
@@ -263,12 +294,17 @@ export function ChatWidget({
               aria-label="Votre message"
               maxLength={1200}
             />
-            <button type="submit" aria-label="Envoyer" disabled={sending || !text.trim()}>
+            <button
+              type="submit"
+              aria-label="Envoyer"
+              disabled={sending || !text.trim()}
+            >
               <Icon name="send" size={18} />
             </button>
           </form>
           <div className="chat-disclaimer">
-            Assistant Allo Togo — réponses basées sur le catalogue. Les questions non résolues sont transmises à un employé.
+            Assistant Allo Togo — réponses basées sur le catalogue. Les
+            questions non résolues sont transmises à un employé.
           </div>
         </aside>
       )}

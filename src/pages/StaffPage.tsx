@@ -105,11 +105,11 @@ function StaffWorkspace({
 
   const activeMissions = missions.filter(
     (mission) =>
-      !["LIVREE", "ECHEC_LIVRAISON", "REJETEE", "ANNULEE"].includes(mission.status),
+      !["LIVREE", "ECHEC_LIVRAISON", "REJETEE", "ANNULEE"].includes(
+        mission.status,
+      ),
   )
-  const completed = missions.filter((mission) =>
-    mission.status === "LIVREE",
-  )
+  const completed = missions.filter((mission) => mission.status === "LIVREE")
 
   const areaLabel = user.role === "TECHNICIAN" ? "TECHNICIEN" : "LIVREUR"
   const staffNav: DashboardNavItem[] = [
@@ -231,8 +231,12 @@ function StaffWorkspace({
                 >
                   <option value="">Toutes mes missions</option>
                   <option value="COMMANDE_ACCEPTEE">Acceptées</option>
-                  <option value="COMMANDE_EN_PREPARATION">En préparation</option>
-                  <option value="COMMANDE_EN_COURS_DE_LIVRAISON">En cours</option>
+                  <option value="COMMANDE_EN_PREPARATION">
+                    En préparation
+                  </option>
+                  <option value="COMMANDE_EN_COURS_DE_LIVRAISON">
+                    En cours
+                  </option>
                   <option value="LIVREE">Livrées / retirées</option>
                   <option value="ECHEC_LIVRAISON">Échecs de livraison</option>
                 </select>
@@ -287,7 +291,7 @@ function StaffWorkspace({
                             {mission.deliveryZone ||
                               mission.deliveryAddress ||
                               (mission.deliveryLatitude !== null ||
-                                mission.deliveryMapUrl
+                              mission.deliveryMapUrl
                                 ? "Point GPS partagé"
                                 : "Agence")}
                           </small>

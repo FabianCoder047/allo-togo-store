@@ -1,10 +1,10 @@
-import bcrypt from 'bcryptjs'
-import jwt, { type SignOptions } from 'jsonwebtoken'
-import { prisma } from '../../db/prisma.js'
-import { env } from '../../config/env.js'
-import { unauthorized, badRequest } from '../../lib/errors.js'
-import { randomToken, sha256 } from '../../lib/ids.js'
-import type { StaffRole } from '@prisma/client'
+import bcrypt from "bcryptjs"
+import jwt, { type SignOptions } from "jsonwebtoken"
+import { prisma } from "../../db/prisma.js"
+import { env } from "../../config/env.js"
+import { unauthorized, badRequest } from "../../lib/errors.js"
+import { randomToken, sha256 } from "../../lib/ids.js"
+import type { StaffRole } from "@prisma/client"
 
 export type AuthUser = {
   id: string
@@ -24,18 +24,19 @@ const accessTokenPayload = (user: AuthUser) => ({
 
 export const signAccessToken = (user: AuthUser) =>
   jwt.sign(accessTokenPayload(user), env.JWT_ACCESS_SECRET, {
-    expiresIn: env.JWT_ACCESS_TTL as SignOptions['expiresIn'],
-    issuer: 'allo-togo-store',
-    audience: 'allo-togo-staff',
+    expiresIn: env.JWT_ACCESS_TTL as SignOptions["expiresIn"],
+    issuer: "allo-togo-store",
+    audience: "allo-togo-staff",
   })
 
 export const verifyAccessToken = (token: string): AuthUser => {
   try {
     const payload = jwt.verify(token, env.JWT_ACCESS_SECRET, {
-      issuer: 'allo-togo-store',
-      audience: 'allo-togo-staff',
+      issuer: "allo-togo-store",
+      audience: "allo-togo-staff",
     }) as jwt.JwtPayload
-    if (!payload.sub || !payload.role || !payload.email || !payload.name) throw new Error('payload incomplet')
+    if (!payload.sub || !payload.role || !payload.email || !payload.name)
+      throw new Error("payload incomplet")
     return {
       id: payload.sub,
       name: String(payload.name),
@@ -44,13 +45,19 @@ export const verifyAccessToken = (token: string): AuthUser => {
       mustChangePassword: Boolean(payload.mustChangePassword),
     }
   } catch {
-    throw unauthorized('Session expirée ou invalide.')
+    throw unauthorized("Session expirée ou invalide.")
   }
 }
 
-const createRefreshSession = async (userId: string, ip?: string, userAgent?: string) => {
+const createRefreshSession = async (
+  userId: string,
+  ip?: string,
+  userAgent?: string,
+) => {
   const refreshToken = randomToken(48)
-  const expiresAt = new Date(Date.now() + env.JWT_REFRESH_TTL_DAYS * 24 * 60 * 60 * 1000)
+  const expiresAt = new Date(
+    Date.now() + env.JWT_REFRESH_TTL_DAYS * 24 * 60 * 60 * 1000,
+  )
   await prisma.refreshSession.create({
     data: {
       userId,
@@ -83,20 +90,33 @@ const publicUser = (user: {
   mustChangePassword: user.mustChangePassword,
 })
 
-export const login = async (email: string, password: string, ip?: string, userAgent?: string) => {
-  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } })
-  const genericError = unauthorized('Identifiants invalides.')
+export const login = async (
+  email: string,
+  password: string,
+  ip?: string,
+  userAgent?: string,
+) => {
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
+  })
+  const genericError = unauthorized("Identifiants invalides.")
 
   if (!user || !user.active) {
     // Comparaison factice pour limiter les attaques temporelles.
-    await bcrypt.compare(password, '$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid')
+    await bcrypt.compare(
+      password,
+      "$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid",
+    )
     throw genericError
   }
 
   const valid = await bcrypt.compare(password, user.passwordHash)
   if (!valid) throw genericError
 
-  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() },
+  })
   const tokens = await createRefreshSession(user.id, ip, userAgent)
   return {
     accessToken: signAccessToken(publicUser(user)),
@@ -105,17 +125,29 @@ export const login = async (email: string, password: string, ip?: string, userAg
   }
 }
 
-export const refresh = async (refreshToken: string, ip?: string, userAgent?: string) => {
+export const refresh = async (
+  refreshToken: string,
+  ip?: string,
+  userAgent?: string,
+) => {
   const session = await prisma.refreshSession.findUnique({
     where: { tokenHash: sha256(refreshToken) },
     include: { user: true },
   })
 
-  if (!session || session.revokedAt || session.expiresAt.getTime() < Date.now() || !session.user.active) {
-    throw unauthorized('Session expirée. Veuillez vous reconnecter.')
+  if (
+    !session ||
+    session.revokedAt ||
+    session.expiresAt.getTime() < Date.now() ||
+    !session.user.active
+  ) {
+    throw unauthorized("Session expirée. Veuillez vous reconnecter.")
   }
 
-  await prisma.refreshSession.update({ where: { id: session.id }, data: { revokedAt: new Date() } })
+  await prisma.refreshSession.update({
+    where: { id: session.id },
+    data: { revokedAt: new Date() },
+  })
   const tokens = await createRefreshSession(session.userId, ip, userAgent)
   return {
     accessToken: signAccessToken(publicUser(session.user)),
@@ -139,11 +171,15 @@ export const revokeAllSessions = async (userId: string) => {
   })
 }
 
-export const changePassword = async (userId: string, currentPassword: string, newPassword: string) => {
+export const changePassword = async (
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+) => {
   const user = await prisma.user.findUnique({ where: { id: userId } })
   if (!user) throw unauthorized()
   const valid = await bcrypt.compare(currentPassword, user.passwordHash)
-  if (!valid) throw badRequest('Le mot de passe actuel est incorrect.')
+  if (!valid) throw badRequest("Le mot de passe actuel est incorrect.")
   const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS)
   await prisma.user.update({
     where: { id: userId },
@@ -152,7 +188,8 @@ export const changePassword = async (userId: string, currentPassword: string, ne
   await revokeAllSessions(userId)
 }
 
-export const hashPassword = (password: string) => bcrypt.hash(password, env.BCRYPT_ROUNDS)
+export const hashPassword = (password: string) =>
+  bcrypt.hash(password, env.BCRYPT_ROUNDS)
 
 export type ProfileUpdate = {
   firstName: string
@@ -174,7 +211,9 @@ export const updateProfile = async (userId: string, input: ProfileUpdate) => {
       firstName,
       lastName,
       name: `${firstName} ${lastName}`.trim(),
-      ...(input.phone !== undefined ? { phone: input.phone?.trim() || null } : {}),
+      ...(input.phone !== undefined
+        ? { phone: input.phone?.trim() || null }
+        : {}),
     },
   })
   return publicUser(user)

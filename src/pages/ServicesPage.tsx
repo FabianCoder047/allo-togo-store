@@ -277,8 +277,7 @@ export function ServiceDetailPage({
               {service.price > 0 ? formatPrice(service.price) : "Sur devis"}
               {service.wholesalePrices?.map((tier) => (
                 <small key={tier.minQuantity}>
-                  {wholesaleQuantityLabel(tier)}:{" "}
-                  {formatPrice(tier.unitPrice)}
+                  {wholesaleQuantityLabel(tier)}: {formatPrice(tier.unitPrice)}
                 </small>
               ))}
             </div>

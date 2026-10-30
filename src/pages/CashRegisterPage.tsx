@@ -43,17 +43,13 @@ export function CashRegisterPage({
 
   // Seuls la gestion commerciale et la direction encaissent les espèces au
   // retour de l’équipe de livraison.
-  if (
-    !["COMMERCIAL", "DIRECTOR", "ADMIN"].includes(user.role as string)
-  ) {
+  if (!["COMMERCIAL", "DIRECTOR", "ADMIN"].includes(user.role as string)) {
     return (
       <main className="login-page">
         <div className="login-card">
           <span className="eyebrow">Encaissement espèces</span>
           <h1>Accès réservé</h1>
-          <p>
-            Cette page est réservée au commercial et au directeur.
-          </p>
+          <p>Cette page est réservée au commercial et au directeur.</p>
         </div>
       </main>
     )
@@ -146,9 +142,7 @@ export function CashRegisterPage({
           <LoadingState label="Chargement des commandes à encaisser…" />
         ) : orders.length === 0 ? (
           <div className="empty-state">
-            <p>
-              Aucune commande livrée en attente d’encaissement espèces.
-            </p>
+            <p>Aucune commande livrée en attente d’encaissement espèces.</p>
           </div>
         ) : (
           <table className="register-table">

@@ -1,29 +1,29 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Icon } from './Icon'
-import { Alert, LoadingState } from './ui'
-import { api, errorMessage } from '../lib/api'
-import { formatDate } from '../lib/format'
-import { getStaffSocket } from '../lib/realtime'
-import type { AssistantThread, AssistantThreadMessage } from '../types'
+import { useCallback, useEffect, useState, type FormEvent } from "react"
+import { Icon } from "./Icon"
+import { Alert, LoadingState } from "./ui"
+import { api, errorMessage } from "../lib/api"
+import { formatDate } from "../lib/format"
+import { getStaffSocket } from "../lib/realtime"
+import type { AssistantThread, AssistantThreadMessage } from "../types"
 
 const statusLabels: Record<string, string> = {
-  OPEN: 'En attente de réponse',
-  ANSWERED: 'Réponse envoyée',
-  RESOLVED: 'Discussion résolue',
+  OPEN: "En attente de réponse",
+  ANSWERED: "Réponse envoyée",
+  RESOLVED: "Discussion résolue",
 }
 
 const authorLabels: Record<string, string> = {
-  CLIENT: 'Client',
-  AI: 'Assistant Allo Togo',
-  STAFF: 'Employé Allo Togo',
-  SYSTEM: 'Système',
+  CLIENT: "Client",
+  AI: "Assistant Allo Togo",
+  STAFF: "Employé Allo Togo",
+  SYSTEM: "Système",
 }
 
 const authorBadges: Record<string, string> = {
-  CLIENT: 'Question',
-  AI: 'IA',
-  STAFF: 'Équipe',
-  SYSTEM: 'Info',
+  CLIENT: "Question",
+  AI: "IA",
+  STAFF: "Équipe",
+  SYSTEM: "Info",
 }
 
 export function AssistantThreadPanel({
@@ -35,12 +35,12 @@ export function AssistantThreadPanel({
   threadKey: string
   reference?: string
   onClose: () => void
-  notify: (message: string, tone?: 'success' | 'error' | 'info') => void
+  notify: (message: string, tone?: "success" | "error" | "info") => void
 }) {
   const [thread, setThread] = useState<AssistantThread | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [reply, setReply] = useState('')
+  const [reply, setReply] = useState("")
   const [sending, setSending] = useState(false)
   const [resolving, setResolving] = useState(false)
   const [saveToKnowledge, setSaveToKnowledge] = useState(true)
@@ -73,11 +73,11 @@ export function AssistantThreadPanel({
     const onStatus = (payload: { threadId?: string }) => {
       if (payload?.threadId === thread?.id) void load({ silent: true })
     }
-    socket.on('assistant:support-message', onMessage)
-    socket.on('assistant:support-status', onStatus)
+    socket.on("assistant:support-message", onMessage)
+    socket.on("assistant:support-status", onStatus)
     return () => {
-      socket.off('assistant:support-message', onMessage)
-      socket.off('assistant:support-status', onStatus)
+      socket.off("assistant:support-message", onMessage)
+      socket.off("assistant:support-status", onStatus)
     }
   }, [load, thread?.id])
 
@@ -88,12 +88,12 @@ export function AssistantThreadPanel({
     setSending(true)
     try {
       await api.staff.replyAssistantThread(threadKey, value)
-      setReply('')
+      setReply("")
       if (saveToKnowledge) {
         const clientMessage = messages
           .slice()
           .reverse()
-          .find((message) => message.authorType === 'CLIENT')
+          .find((message) => message.authorType === "CLIENT")
         if (clientMessage) {
           // L'enregistrement dans les connaissances ne doit pas faire échouer
           // l'envoi de la réponse au client.
@@ -101,7 +101,7 @@ export function AssistantThreadPanel({
             await api.staff.knowledge.create({
               question: clientMessage.body,
               answer: value,
-              keywords: '',
+              keywords: "",
               sourceThreadId: thread?.id ?? undefined,
               sourceMessageId: clientMessage.id,
             })
@@ -111,9 +111,9 @@ export function AssistantThreadPanel({
         }
       }
       await load({ silent: true })
-      notify('Réponse envoyée au client.', 'success')
+      notify("Réponse envoyée au client.", "success")
     } catch (err) {
-      notify(errorMessage(err), 'error')
+      notify(errorMessage(err), "error")
     } finally {
       setSending(false)
     }
@@ -123,11 +123,11 @@ export function AssistantThreadPanel({
     if (resolving) return
     setResolving(true)
     try {
-      await api.staff.updateAssistantThread(threadKey, 'RESOLVED')
+      await api.staff.updateAssistantThread(threadKey, "RESOLVED")
       await load({ silent: true })
-      notify('Discussion marquée comme résolue.', 'success')
+      notify("Discussion marquée comme résolue.", "success")
     } catch (err) {
-      notify(errorMessage(err), 'error')
+      notify(errorMessage(err), "error")
     } finally {
       setResolving(false)
     }
@@ -142,17 +142,25 @@ export function AssistantThreadPanel({
           <span className="eyebrow">Assistant Allo Togo</span>
           <h2>Discussion client</h2>
           <small>
-            {thread?.reference || reference || 'Question non résolue'}
-            {thread ? ` · ${statusLabels[thread.status] ?? thread.status}` : ''}
+            {thread?.reference || reference || "Question non résolue"}
+            {thread ? ` · ${statusLabels[thread.status] ?? thread.status}` : ""}
           </small>
         </div>
         <div className="order-panel-actions">
-          {thread && thread.status !== 'RESOLVED' && (
-            <button className="secondary small" onClick={() => void resolve()} disabled={resolving}>
-              {resolving ? 'Clôture…' : 'Marquer résolu'}
+          {thread && thread.status !== "RESOLVED" && (
+            <button
+              className="secondary small"
+              onClick={() => void resolve()}
+              disabled={resolving}
+            >
+              {resolving ? "Clôture…" : "Marquer résolu"}
             </button>
           )}
-          <button className="icon-btn" onClick={onClose} aria-label="Fermer la discussion">
+          <button
+            className="icon-btn"
+            onClick={onClose}
+            aria-label="Fermer la discussion"
+          >
             <Icon name="x" />
           </button>
         </div>
@@ -175,8 +183,8 @@ export function AssistantThreadPanel({
             <div className="assistant-thread-context">
               <Icon name="headset" size={16} />
               <p>
-                Le client a posé une question que l’assistant n’a pas pu résoudre. Votre réponse sera visible dans son
-                fil de discussion.
+                Le client a posé une question que l’assistant n’a pas pu
+                résoudre. Votre réponse sera visible dans son fil de discussion.
               </p>
             </div>
 
@@ -194,7 +202,9 @@ export function AssistantThreadPanel({
                   >
                     <span>
                       {authorLabels[message.authorType] ?? message.authorName}
-                      <b>{authorBadges[message.authorType] ?? message.authorName}</b>
+                      <b>
+                        {authorBadges[message.authorType] ?? message.authorName}
+                      </b>
                     </span>
                     <p>{message.body}</p>
                     <small>{formatDate(message.createdAt)}</small>
@@ -203,7 +213,7 @@ export function AssistantThreadPanel({
               )}
             </div>
 
-            {thread.status === 'RESOLVED' ? (
+            {thread.status === "RESOLVED" ? (
               <div className="assistant-thread-resolved">
                 <Icon name="check" size={15} /> Cette discussion est clôturée.
               </div>
@@ -228,18 +238,25 @@ export function AssistantThreadPanel({
                     id="save-to-knowledge"
                     type="checkbox"
                     checked={saveToKnowledge}
-                    onChange={(event) => setSaveToKnowledge(event.target.checked)}
+                    onChange={(event) =>
+                      setSaveToKnowledge(event.target.checked)
+                    }
                   />
                   <label htmlFor="save-to-knowledge" className="leading-none">
-                    Conserver cette réponse dans les connaissances de l’assistant{' '}
+                    Conserver cette réponse dans les connaissances de
+                    l’assistant{" "}
                     <span className="block opacity-70 mt-0.5">
                       (réutilisée pour les questions similaires)
                     </span>
                   </label>
                 </div>
                 <div>
-                  <button className="primary small" type="submit" disabled={sending || !reply.trim()}>
-                    {sending ? 'Envoi…' : 'Envoyer la réponse'}
+                  <button
+                    className="primary small"
+                    type="submit"
+                    disabled={sending || !reply.trim()}
+                  >
+                    {sending ? "Envoi…" : "Envoyer la réponse"}
                   </button>
                 </div>
               </form>

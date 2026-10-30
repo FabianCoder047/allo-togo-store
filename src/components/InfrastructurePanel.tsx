@@ -16,12 +16,12 @@ const formatUptime = (seconds: number) => {
   return `${minutes} min`
 }
 
-const statusLabel = (value: { simulated?: boolean; configured?: boolean }) => {
+const statusLabel = (value: { simulated?: boolean configured?: boolean }) => {
   if (value.simulated) return "Simulation"
   return value.configured ? "Configuré" : "À configurer"
 }
 
-const statusTone = (value: { simulated?: boolean; configured?: boolean }) => {
+const statusTone = (value: { simulated?: boolean configured?: boolean }) => {
   if (value.simulated) return "draft"
   return value.configured ? "live" : "danger"
 }
@@ -73,8 +73,8 @@ export function InfrastructurePanel({ role }: { role: StaffUser["role"] }) {
               <span className="eyebrow">Supervision technique</span>
               <h2>Santé et activité du site</h2>
               <p>
-                Suivez les services, les intégrations et les actions enregistrées
-                par l’application.
+                Suivez les services, les intégrations et les actions
+                enregistrées par l’application.
               </p>
             </div>
             <span className={`infra-health ${data.system.database.status}`}>
@@ -89,7 +89,9 @@ export function InfrastructurePanel({ role }: { role: StaffUser["role"] }) {
             <article>
               <span>Sessions de connexion valides</span>
               <strong>{data.activity.validSessions}</strong>
-              <small>non révoquées et non expirées, pas nécessairement en ligne</small>
+              <small>
+                non révoquées et non expirées, pas nécessairement en ligne
+              </small>
             </article>
             <article>
               <span>Connexions · 24 h</span>
@@ -109,7 +111,9 @@ export function InfrastructurePanel({ role }: { role: StaffUser["role"] }) {
             <article>
               <span>Contenus actifs</span>
               <strong>{data.catalog.activeProducts}</strong>
-              <small>sur {data.catalog.totalProducts} contenus du catalogue</small>
+              <small>
+                sur {data.catalog.totalProducts} contenus du catalogue
+              </small>
             </article>
           </div>
 
@@ -128,7 +132,9 @@ export function InfrastructurePanel({ role }: { role: StaffUser["role"] }) {
                     analyticsConfig.configured ? "live" : "danger"
                   }`}
                 >
-                  {analyticsConfig.configured ? "PostHog actif" : "Non configuré"}
+                  {analyticsConfig.configured
+                    ? "PostHog actif"
+                    : "Non configuré"}
                 </span>
               </div>
               <div className="infra-posthog">
@@ -168,8 +174,8 @@ export function InfrastructurePanel({ role }: { role: StaffUser["role"] }) {
                       inactif : aucune donnée n’est inventée dans cet écran.
                     </Alert>
                     <p className="infra-help">
-                      Renseignez ces variables dans le fichier{" "}
-                      <code>.env</code> du frontend, puis redémarrez Vite :
+                      Renseignez ces variables dans le fichier <code>.env</code>{" "}
+                      du frontend, puis redémarrez Vite :
                     </p>
                     <pre className="infra-code">{`VITE_POSTHOG_KEY=phc_votre_cle_publique
 VITE_POSTHOG_HOST=https://eu.i.posthog.com
@@ -235,8 +241,8 @@ VITE_POSTHOG_DASHBOARD_URL=https://eu.posthog.com/project/...`}</pre>
                 <li>
                   <span>Catalogue actif</span>
                   <strong>
-                    {data.catalog.activeProducts} /{" "}
-                    {data.catalog.totalProducts} contenus
+                    {data.catalog.activeProducts} / {data.catalog.totalProducts}{" "}
+                    contenus
                   </strong>
                 </li>
                 <li>
@@ -298,7 +304,8 @@ VITE_POSTHOG_DASHBOARD_URL=https://eu.posthog.com/project/...`}</pre>
                 <div>
                   <h2>Comptes du personnel</h2>
                   <p>
-                    {data.users.active} actif(s) sur {data.users.total} compte(s).
+                    {data.users.active} actif(s) sur {data.users.total}{" "}
+                    compte(s).
                   </p>
                 </div>
               </div>
