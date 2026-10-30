@@ -93,8 +93,8 @@ export function LoginPage({
           <button className="primary wide" type="submit" disabled={submitting}>
             {submitting ? 'Connexion…' : 'Se connecter'} <Icon name="arrow" />
           </button>
-          <p className="login-note">
-            L’accès est réservé au personnel Allo Togo.
+          <p className="login-forgot-password">
+            <a href="/forgot-password">Réinitialiser mon mot de passe</a>
           </p>
           <button type="button" className="back-link" onClick={() => navigate('/')}>
             <Icon name="arrow" /> Retour à la boutique

@@ -6,23 +6,72 @@ const prisma = new PrismaClient()
 
 const hash = (password: string) => bcrypt.hash(password, 12)
 
-const products: Array<{
-  categorySlug: string
-  type: ProductType
-  name: string
-  slug: string
-  sku: string
-  shortDescription: string
-  description: string
-  price: number
-  quoteOnly?: boolean
-  featured?: boolean
-  manageStock?: boolean
-  stock?: number
-  specs?: Record<string, string>
-  images: { url: string; alt: string }[]
-}> = [
-  {
+// Users to create after cleanup (email = role@allotogo.test, password = RoleAlloTogo2026!, mustChangePassword=false)
+const NEW_USERS = [
+  { role: 'COMMERCIAL', email: 'commercial@allotogo.test', name: 'Agent Commercial' },
+  { role: 'ADMIN', email: 'admin1@allotogo.test', name: 'Admin 1' },
+  { role: 'ADMIN', email: 'admin2@allotogo.test', name: 'Admin 2' },
+  { role: 'ADMIN', email: 'admin3@allotogo.test', name: 'Admin 3' },
+  { role: 'ADMIN', email: 'admin4@allotogo.test', name: 'Admin 4' },
+  { role: 'ADMIN', email: 'admin5@allotogo.test', name: 'Admin 5' },
+  { role: 'TECHNICIAN', email: 'technicien1@allotogo.test', name: 'Technicien 1' },
+  { role: 'TECHNICIAN', email: 'technicien2@allotogo.test', name: 'Technicien 2' },
+  { role: 'TECHNICIAN', email: 'technicien3@allotogo.test', name: 'Technicien 3' },
+  { role: 'DELIVERY', email: 'livreur1@allotogo.test', name: 'Livreur 1' },
+  { role: 'DELIVERY', email: 'livreur2@allotogo.test', name: 'Livreur 2' },
+  { role: 'DELIVERY', email: 'livreur3@allotogo.test', name: 'Livreur 3' },
+  { role: 'DELIVERY', email: 'livreur4@allotogo.test', name: 'Livreur 4' },
+  { role: 'DELIVERY', email: 'livreur5@allotogo.test', name: 'Livreur 5' },
+  { role: 'DELIVERY', email: 'livreur6@allotogo.test', name: 'Livreur 6' },
+  { role: 'DELIVERY', email: 'livreur7@allotogo.test', name: 'Livreur 7' },
+  { role: 'DELIVERY', email: 'livreur8@allotogo.test', name: 'Livreur 8' },
+  { role: 'DELIVERY', email: 'livreur9@allotogo.test', name: 'Livreur 9' },
+  { role: 'DELIVERY', email: 'livreur10@allotogo.test', name: 'Livreur 10' },
+]
+
+async function deleteAllUsersExceptDirector() {
+  const allUsers = await prisma.user.findMany()
+  for (const user of allUsers) {
+    if (user.email !== 'directeur@allotogo.test') {
+      await prisma.user.delete({ where: { id: user.id } })
+    }
+  }
+}
+
+async function createNewUsers() {
+  const password = 'RoleAlloTogo2026!'
+  const passwordHash = await hash(password)
+  for (const userData of NEW_USERS) {
+    if (userData.email === 'directeur@allotogo.test') continue
+    const [firstName, ...lastNameParts] = userData.name.split(' ')
+    const lastName = lastNameParts.join(' ') || null
+    await prisma.user.create({
+      data: {
+        email: userData.email,
+        passwordHash,
+        mustChangePassword: false,
+        role: userData.role,
+        active: true,
+        firstName,
+        lastName,
+        name: userData.name,
+      },
+    })
+  }
+}
+
+main()
+  .catch((error) => {
+    console.error(error)
+    process.exitCode = 1
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })
+
+// Execute cleanup and user creation at seed start
+await deleteAllUsersExceptDirector()
+await createNewUsers()
     categorySlug: 'traceurs-gps',
     type: 'GPS',
     name: 'Traceur GPS Compact',
