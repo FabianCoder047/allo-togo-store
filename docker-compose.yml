@@ -1,0 +1,101 @@
+# Allo Togo Store — PostgreSQL + API.
+#
+# Démarrage de la base seule (développement) :
+#   docker compose up -d db
+#
+# Démarrage complet (production) : définir les secrets dans un fichier .env
+# à la racine, puis :
+#   docker compose up -d --build
+#
+# Le frontend est compilé séparément (`pnpm build`) et servi par un reverse
+# proxy qui redirige /api et /socket.io vers le service `api`.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-allotogo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-allotogo}
+      POSTGRES_DB: ${POSTGRES_DB:-allotogo}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - allotogo-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-allotogo} -d ${POSTGRES_DB:-allotogo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-allotogo}:${POSTGRES_PASSWORD:-allotogo}@db:5432/${POSTGRES_DB:-allotogo}?schema=public}
+      DIRECT_URL: ${DIRECT_URL:-${DATABASE_URL:-postgresql://${POSTGRES_USER:-allotogo}:${POSTGRES_PASSWORD:-allotogo}@db:5432/${POSTGRES_DB:-allotogo}?schema=public}}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:8443}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8443}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Obligatoires : l'API refuse de démarrer si ces secrets sont absents ou trop courts.
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-1h}
+      JWT_REFRESH_TTL_DAYS: ${JWT_REFRESH_TTL_DAYS:-7}
+      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+      SEED_DEMO_STAFF: "false"
+      WHATSAPP_PROVIDER: ${WHATSAPP_PROVIDER:-simulated}
+      WHATSAPP_SIMULATION: ${WHATSAPP_SIMULATION:-true}
+      WHATSAPP_API_URL: ${WHATSAPP_API_URL:-}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_SENDER: ${WHATSAPP_SENDER:-}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+      EMAIL_FROM: "${EMAIL_FROM:-Allo Togo Store <no-reply@allotogo.test>}"
+      EMAIL_API_URL: ${EMAIL_API_URL:-}
+      EMAIL_API_TOKEN: ${EMAIL_API_TOKEN:-}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-465}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Allo-Togo Shop}
+      BICTORYS_ENABLED: ${BICTORYS_ENABLED:-false}
+      BICTORYS_MODE: ${BICTORYS_MODE:-test}
+      BICTORYS_BASE_URL: ${BICTORYS_BASE_URL:-}
+      BICTORYS_API_KEY: ${BICTORYS_API_KEY:-}
+      BICTORYS_SECRET_KEY: ${BICTORYS_SECRET_KEY:-}
+      BICTORYS_WEBHOOK_SECRET: ${BICTORYS_WEBHOOK_SECRET:-}
+      BICTORYS_SIGNATURE_HEADER: ${BICTORYS_SIGNATURE_HEADER:-x-bictorys-signature}
+      BICTORYS_MOCK: "false"
+      DELIVERY_FEE_FCFA: ${DELIVERY_FEE_FCFA:-0}
+      DELIVERY_CAN_RECORD_PAYMENT: ${DELIVERY_CAN_RECORD_PAYMENT:-false}
+      TRACKING_ACCESS_TTL_HOURS: ${TRACKING_ACCESS_TTL_HOURS:-24}
+      TRACKING_LOOKUP_MAX_ATTEMPTS: ${TRACKING_LOOKUP_MAX_ATTEMPTS:-10}
+    ports:
+      - "${API_PORT:-4000}:4000"
+    volumes:
+      - allotogo-uploads:/app/uploads
+      - allotogo-logs:/app/logs
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  allotogo-db:
+  allotogo-uploads:
+  allotogo-logs:

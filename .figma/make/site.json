@@ -1,0 +1,12 @@
+{
+  "title": "Allo Togo Store — Traceurs GPS & boissons",
+  "description": "Boutique Allo Togo : traceurs GPS, boissons et prestations professionnelles. Commandez en ligne, suivez vos livraisons et échangez avec notre équipe.",
+  "language": "fr",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

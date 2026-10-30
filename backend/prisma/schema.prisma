@@ -1,0 +1,705 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Personnel et sessions
+// ───────────────────────────────────────────────────────────────────────────
+
+enum StaffRole {
+  /// Direction générale : accès complet à l’activité, aux comptes et à l’audit.
+  DIRECTOR
+  /// Informaticien : infrastructure, affluence, audit technique et PostHog.
+  ADMIN
+  EMPLOYEE
+  COMMERCIAL
+  TECHNICIAN
+  DELIVERY
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  /// Nom complet calculé à partir de `firstName` + `lastName`.
+  name               String
+  firstName          String?
+  lastName           String?
+  email              String    @unique
+  passwordHash       String
+  mustChangePassword Boolean   @default(false)
+  phone              String?
+  role               StaffRole
+  active             Boolean   @default(true)
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  sessions                RefreshSession[]
+  assignedOrders          Order[]                  @relation("OrderAssignedStaff")
+  assignments             DeliveryAssignment[]     @relation("AssignmentStaff")
+  assignmentsMade         DeliveryAssignment[]     @relation("AssignedBy")
+  payments                Payment[]
+  statusChanges           OrderStatusHistory[]
+  notes                   OrderNote[]
+  messages                Message[]
+  fulfillment             FulfillmentEvent[]
+  auditLogs               AuditLog[]
+  quotesHandled           QuoteRequest[]           @relation("QuoteAssignee")
+  assistantThreadMessages AssistantThreadMessage[]
+  assistantKnowledge          AssistantKnowledge[]
+
+  @@index([role, active])
+}
+
+model RefreshSession {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  ip        String?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Catalogue
+// ───────────────────────────────────────────────────────────────────────────
+
+enum ProductType {
+  GPS
+  DRINK
+  SERVICE
+}
+
+model Category {
+  id          String      @id @default(cuid())
+  name        String
+  slug        String      @unique
+  type        ProductType
+  description String?
+  active      Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  products Product[]
+
+  @@index([type, active, sortOrder])
+}
+
+model Product {
+  id               String      @id @default(cuid())
+  categoryId       String
+  name             String
+  slug             String      @unique
+  sku              String      @unique
+  type             ProductType
+  shortDescription String
+  description      String
+  price            Int         @default(0) // FCFA, entier
+  previousPrice    Int?
+  cartonPrice      Int?
+  wholesalePrices  Json?
+  quoteOnly        Boolean     @default(false)
+  specs            Json?
+  stock            Int?
+  manageStock      Boolean     @default(false)
+  available        Boolean     @default(true)
+  active           Boolean     @default(true)
+  featured         Boolean     @default(false)
+  sortOrder        Int         @default(0)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  category  Category            @relation(fields: [categoryId], references: [id])
+  images    ProductImage[]
+  videos    ProductVideo[]
+  items     OrderItem[]
+  movements InventoryMovement[]
+
+  @@index([type, active, available])
+  @@index([categoryId, sortOrder])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+}
+
+model ProductVideo {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+}
+
+model InventoryMovement {
+  id        String   @id @default(cuid())
+  productId String
+  type      String // IN, OUT, ADJUST
+  quantity  Int
+  reason    String?
+  actorId   String?
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([productId, createdAt])
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Commandes
+// ───────────────────────────────────────────────────────────────────────────
+
+/// Source de vérité unique des statuts métier (voir stateMachine.ts).
+enum OrderStatus {
+  EN_ATTENTE_CONFIRMATION
+  COMMANDE_ACCEPTEE
+  COMMANDE_EN_PREPARATION
+  COMMANDE_EN_COURS_DE_LIVRAISON
+  LIVREE
+  ECHEC_LIVRAISON
+  REJETEE
+  ANNULEE
+}
+
+enum OperationalStatus {
+  NON_DEMARRE
+  EN_PREPARATION
+  PRET
+  DISPONIBLE_EN_AGENCE
+  EN_COURS_DE_LIVRAISON
+  INSTALLATION_EN_COURS
+  TERMINE
+  ECHEC
+}
+
+enum PaymentStatus {
+  NON_PAYE
+  PAIEMENT_EN_COURS
+  PARTIELLEMENT_PAYE
+  PAYE
+  ECHEC_PAIEMENT
+  REMBOURSE
+}
+
+enum PaymentMode {
+  PAIEMENT_A_LA_LIVRAISON
+  PAIEMENT_EN_AGENCE
+  BICTORYS
+  AUTRE
+}
+
+enum CustomerPaymentChoice {
+  ESPECES
+  FLOOZ
+  MIXX_BY_YAS
+}
+
+enum FulfillmentMode {
+  LIVRAISON
+  RETRAIT_AGENCE
+}
+
+enum AssignmentType {
+  TECHNICIAN
+  DELIVERY
+}
+
+model OrderGroup {
+  id               String   @id @default(cuid())
+  publicRef        String   @unique
+  customerName     String
+  customerPhone    String
+  customerWhatsapp String?
+  customerEmail    String?
+  createdAt        DateTime @default(now())
+
+  orders Order[]
+
+  @@index([customerPhone])
+  @@index([createdAt])
+}
+
+model Order {
+  id                 String            @id @default(cuid())
+  orderNumber        String            @unique
+  trackingCode       String            @unique
+  groupId            String
+  categoryType       ProductType
+  status             OrderStatus       @default(EN_ATTENTE_CONFIRMATION)
+  /// Hérité : dérivé du statut métier, jamais utilisé pour décider d'une action.
+  operationalStatus  OperationalStatus @default(NON_DEMARRE)
+  paymentStatus      PaymentStatus     @default(NON_PAYE)
+  paymentMode        PaymentMode
+  customerPaymentChoice    CustomerPaymentChoice?
+  customerPaymentChoiceAt  DateTime?
+  customerPaymentPhone     String?
+  fulfillmentMode    FulfillmentMode
+  requiresTechnician Boolean           @default(false)
+
+  customerName     String
+  customerPhone    String
+  customerWhatsapp String?
+  customerEmail    String?
+
+  deliveryZone         String?
+  deliveryAddress      String?
+  deliveryInstructions String?
+  /// Point exact choisi par le client sur Google Maps.
+  deliveryLatitude     Float?
+  deliveryLongitude    Float?
+  /// Lien Google Maps partagé par le client (courte URL ou URL de lieu).
+  deliveryMapUrl       String?
+
+  subtotal    Int @default(0)
+  deliveryFee Int @default(0)
+  total       Int @default(0)
+  paidAmount  Int @default(0)
+
+  assignedToId           String?
+  confirmedAt            DateTime?
+  /// Échéance de retrait (confirmedAt + 72 h) pour les commandes RETRAIT_AGENCE.
+  pickupDeadlineAt       DateTime?
+  fulfillmentCompletedAt DateTime?
+  closedAt               DateTime?
+  cancelledAt            DateTime?
+  cancellationReason     String?
+  stockRestored          Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  group          OrderGroup           @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  assignedTo     User?                @relation("OrderAssignedStaff", fields: [assignedToId], references: [id])
+  items          OrderItem[]
+  history        OrderStatusHistory[]
+  assignments    DeliveryAssignment[]
+  fulfillment    FulfillmentEvent[]
+  payments       Payment[]
+  attempts       PaymentAttempt[]
+  conversations  Conversation[]
+  notifications  Notification[]
+  notes          OrderNote[]
+  trackingAccess TrackingAccess[]
+
+  @@index([status, createdAt])
+  @@index([operationalStatus])
+  @@index([paymentStatus])
+  @@index([categoryType, createdAt])
+  @@index([customerPhone])
+  @@index([assignedToId, status])
+  @@index([groupId])
+  @@index([createdAt])
+  @@index([fulfillmentMode, status, pickupDeadlineAt])
+}
+
+model OrderItem {
+  id            String      @id @default(cuid())
+  orderId       String
+  productId     String?
+  productName   String
+  productSku    String
+  productType   ProductType
+  unitPrice     Int
+  quantity      Int
+  lineTotal     Int
+  specsSnapshot Json?
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model OrderStatusHistory {
+  id              String             @id @default(cuid())
+  orderId         String
+  fromStatus      OrderStatus?
+  toStatus        OrderStatus
+  fromOperational OperationalStatus?
+  toOperational   OperationalStatus?
+  actorId         String?
+  actorType       String             @default("SYSTEM") // SYSTEM, STAFF, CLIENT
+  actorName       String?
+  comment         String?
+  publicComment   Boolean            @default(false)
+  createdAt       DateTime           @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+}
+
+model OrderNote {
+  id        String   @id @default(cuid())
+  orderId   String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  author User  @relation(fields: [authorId], references: [id])
+
+  @@index([orderId, createdAt])
+}
+
+model DeliveryAssignment {
+  id           String         @id @default(cuid())
+  orderId      String
+  staffId      String
+  type         AssignmentType
+  assignedById String
+  instructions String?
+  isLead       Boolean        @default(false)
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  endedAt      DateTime?
+
+  order      Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  staff      User  @relation("AssignmentStaff", fields: [staffId], references: [id])
+  assignedBy User  @relation("AssignedBy", fields: [assignedById], references: [id])
+
+  @@index([orderId, active])
+  @@index([staffId, active])
+}
+
+model FulfillmentEvent {
+  id        String   @id @default(cuid())
+  orderId   String
+  type      String // STARTED, ARRIVED, INSTALLED, DELIVERED, FAILED, NOTE
+  actorId   String?
+  comment   String?
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Paiements
+// ───────────────────────────────────────────────────────────────────────────
+
+enum PaymentMethod {
+  ESPECES
+  FLOOZ
+  MIXX_BY_YAS
+  CARTE_BANCAIRE
+  VIREMENT
+  BICTORYS
+  AUTRE
+}
+
+enum PaymentAttemptStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  EXPIRED
+  CANCELLED
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  orderId        String
+  amount         Int
+  method         PaymentMethod
+  reference      String?
+  receivedById   String?
+  idempotencyKey String        @unique
+  createdAt      DateTime      @default(now())
+
+  order      Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  receivedBy User? @relation(fields: [receivedById], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+}
+
+model PaymentAttempt {
+  id          String               @id @default(cuid())
+  orderId     String
+  provider    String
+  providerRef String               @unique
+  amount      Int
+  status      PaymentAttemptStatus @default(PENDING)
+  checkoutUrl String?
+  metadata    Json?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, status])
+}
+
+model PaymentWebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  eventId     String
+  payload     Json
+  status      String    @default("RECEIVED")
+  error       String?
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([provider, eventId])
+  @@index([createdAt])
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Suivi client et messagerie
+// ───────────────────────────────────────────────────────────────────────────
+
+model TrackingAccess {
+  id         String    @id @default(cuid())
+  orderId    String
+  tokenHash  String    @unique
+  phoneHash  String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, expiresAt])
+}
+
+enum ConversationVisibility {
+  CLIENT
+  INTERNAL
+}
+
+enum MessageAuthorType {
+  CLIENT
+  STAFF
+  SYSTEM
+}
+
+enum MessageKind {
+  TEXT
+  AUDIO
+  LOCATION
+  IMAGE
+  VIDEO
+}
+
+model Conversation {
+  id         String                 @id @default(cuid())
+  orderId    String
+  visibility ConversationVisibility
+  createdAt  DateTime               @default(now())
+
+  order        Order                     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@unique([orderId, visibility])
+  @@index([orderId])
+}
+
+model ConversationParticipant {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String?
+  role           String // CLIENT, STAFF, SYSTEM
+  displayName    String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
+model Message {
+  id             String            @id @default(cuid())
+  conversationId String
+  authorType     MessageAuthorType
+  authorId       String?
+  authorName     String
+  body           String
+  kind           MessageKind       @default(TEXT)
+  audioData      String?           @db.Text
+  mediaData      String?           @db.Text
+  mediaMimeType  String?
+  mediaName      String?
+  mediaSize      Int?
+  durationMs     Int?
+  latitude       Float?
+  longitude      Float?
+  accuracy       Float?
+  locationLabel  String?
+  createdAt      DateTime          @default(now())
+  readAt         DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  author       User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId, createdAt])
+}
+
+// Discussion publique de l’assistant : le client peut être recontacté par un
+// employé après une escalade, sans créer de commande artificielle.
+model AssistantThread {
+  id        String   @id @default(cuid())
+  sessionId String?  @unique
+  reference String   @unique
+  status    String   @default("OPEN") // OPEN, ANSWERED, RESOLVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages      AssistantThreadMessage[]
+  notifications Notification[]
+
+  @@index([status, updatedAt])
+}
+
+model AssistantThreadMessage {
+  id         String   @id @default(cuid())
+  threadId   String
+  authorType String // CLIENT, AI, STAFF, SYSTEM
+  authorId   String?
+  authorName String
+  body       String   @db.Text
+  createdAt  DateTime @default(now())
+
+  thread AssistantThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author User?           @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([threadId, createdAt])
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Notifications, devis, audit, paramètres
+// ───────────────────────────────────────────────────────────────────────────
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+model Notification {
+  id                String             @id @default(cuid())
+  orderId           String?
+  assistantThreadId String?
+  channel           String             @default("WHATSAPP")
+  recipient         String
+  template          String
+  payload           Json?
+  status            NotificationStatus @default(PENDING)
+  attempts          Int                @default(0)
+  lastError         String?
+  scheduledAt       DateTime           @default(now())
+  sentAt            DateTime?
+  createdAt         DateTime           @default(now())
+
+  order           Order?           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  assistantThread AssistantThread? @relation(fields: [assistantThreadId], references: [id], onDelete: SetNull)
+
+  @@index([status, scheduledAt])
+  @@index([orderId])
+  @@index([assistantThreadId])
+}
+
+enum QuoteStatus {
+  NOUVELLE
+  EN_COURS_DE_TRAITEMENT
+  DEVIS_ENVOYE
+  ACCEPTEE
+  REFUSEE
+  CLOTUREE
+}
+
+model QuoteRequest {
+  id           String      @id @default(cuid())
+  reference    String      @unique
+  serviceId    String?
+  name         String
+  phone        String
+  email        String?
+  message      String
+  status       QuoteStatus @default(NOUVELLE)
+  assignedToId String?
+  adminNotes   String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  assignedTo User? @relation("QuoteAssignee", fields: [assignedToId], references: [id])
+
+  @@index([status, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorType String   @default("SYSTEM")
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId, createdAt])
+  @@index([action, createdAt])
+}
+
+model StoreSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Assistant : base de connaissances (réponses employés réinjectées)
+// ───────────────────────────────────────────────────────────────────────────
+
+model AssistantKnowledge {
+  id            String   @id @default(cuid())
+  question      String   @db.Text
+  answer        String   @db.Text
+  keywords      String   // mots-clés séparés par des virgules, utilisés pour la recherche
+  sourceThreadId String?  // fil d'escalade d'origine (plusieurs connaissances peuvent y être liées)
+  sourceMessageId String?
+  createdById   String?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([active, createdAt])
+  @@index([sourceThreadId])
+}

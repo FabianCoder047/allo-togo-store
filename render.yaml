@@ -1,0 +1,79 @@
+# Blueprint Render Free : un seul service Docker sert le SPA, l'API et Socket.IO.
+# La base PostgreSQL est hébergée séparément sur Neon Free (voir docs/DEPLOIEMENT_GRATUIT.md).
+#
+# Après le premier déploiement, renseigner PUBLIC_APP_URL et CORS_ORIGINS avec
+# l'URL Render réelle, puis redéployer.
+services:
+  - type: web
+    name: allo-togo-store
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUBLIC_APP_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 1h
+      - key: JWT_REFRESH_TTL_DAYS
+        value: "7"
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: LOG_LEVEL
+        value: info
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_ADMIN_NAME
+        value: Directeur Allo Togo
+      - key: SEED_IT_ADMIN_EMAIL
+        sync: false
+      - key: SEED_IT_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_IT_ADMIN_NAME
+        value: Informaticien Allo Togo
+      - key: SEED_DEMO_STAFF
+        value: "false"
+      - key: WHATSAPP_PROVIDER
+        value: simulated
+      - key: WHATSAPP_SIMULATION
+        value: "true"
+      - key: SMS_PROVIDER
+        value: simulated
+      - key: SMS_SIMULATION
+        value: "true"
+      - key: EMAIL_PROVIDER
+        value: simulated
+      - key: EMAIL_FROM
+        value: Allo Togo Store <no-reply@allotogo.test>
+      - key: BICTORYS_ENABLED
+        value: "false"
+      - key: BICTORYS_MODE
+        value: test
+      - key: BICTORYS_MOCK
+        value: "false"
+      - key: DELIVERY_FEE_FCFA
+        value: "0"
+      - key: DELIVERY_CAN_RECORD_PAYMENT
+        value: "false"
+      - key: TRACKING_ACCESS_TTL_HOURS
+        value: "24"
+      - key: TRACKING_LOOKUP_MAX_ATTEMPTS
+        value: "10"
