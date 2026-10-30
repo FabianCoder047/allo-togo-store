@@ -94,8 +94,7 @@ export function LoginPage({
             {submitting ? 'Connexion…' : 'Se connecter'} <Icon name="arrow" />
           </button>
           <p className="login-note">
-            L’accès est réservé au personnel Allo Togo. Les sessions sont protégées par un cookie de rafraîchissement
-            httpOnly et un jeton d’accès de courte durée.
+            L’accès est réservé au personnel Allo Togo.
           </p>
           <button type="button" className="back-link" onClick={() => navigate('/')}>
             <Icon name="arrow" /> Retour à la boutique
