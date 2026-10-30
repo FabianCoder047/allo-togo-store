@@ -2157,7 +2157,16 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   text-decoration: none;
 }
 .order-map-link:hover { border-color: var(--orange); color: var(--orange-dark); }
-.account-password-fields { grid-template-columns: minmax(0, 1fr); }
+.forgot-link {
+  color: var(--primary);
+  text-decoration: underline;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.forgot-link:hover {
+  color: var(--orange);
+}
 .account-password-fields > label,
 .account-password-fields .account-wide { grid-column: 1 / -1; min-width: 0; }
 .account-password-fields input { width: 100%; min-width: 0; }

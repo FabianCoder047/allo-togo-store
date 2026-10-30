@@ -94,7 +94,9 @@ export function LoginPage({
             {submitting ? 'Connexion…' : 'Se connecter'} <Icon name="arrow" />
           </button>
           <p className="login-forgot-password">
-            <a href="/forgot-password">Réinitialiser mon mot de passe</a>
+            <a href="/forgot-password" className="forgot-link">
+              Réinitialiser mon mot de passe
+            </a>
           </p>
           <button type="button" className="back-link" onClick={() => navigate('/')}>
             <Icon name="arrow" /> Retour à la boutique
