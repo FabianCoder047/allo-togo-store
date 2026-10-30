@@ -17,6 +17,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.4(react@19.2.4)
+      react-router-dom:
+        specifier: ^6.0.0
+        version: 6.30.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       socket.io-client:
         specifier: ^4.8.4
         version: 4.8.4
@@ -654,6 +657,10 @@ packages:
 
   '@posthog/types@1.416.1':
     resolution: {integrity: sha512-PG06HE2axHNyyZ9CKSSHKSW4pWfQwEtPA1dewFqIwggcIgk1BsQ+tHSNqvZz+IvE2WnBZ8OcOkF9SWI55VxQfA==}
+
+  '@remix-run/router@1.23.4':
+    resolution: {integrity: sha512-q7j5geK7xs3UJSdm9/iytUNclBnLmYx1EnSeCFXHPeutdqgIMeFeHtUZgS3EhlKxdBEAu8OwtJCwmLrEzpSs7Q==}
+    engines: {node: '>=14.0.0'}
 
   '@rolldown/binding-android-arm64@1.0.0-rc.12':
     resolution: {integrity: sha512-pv1y2Fv0JybcykuiiD3qBOBdz6RteYojRFY1d+b95WVuzx211CRh+ytI/+9iVyWQ6koTh5dawe4S/yRfOFjgaA==}
@@ -1761,6 +1768,19 @@ packages:
     resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
     peerDependencies:
       react: ^19.2.4
+
+  react-router-dom@6.30.6:
+    resolution: {integrity: sha512-0RHKZz7wwffvkU+2MFVT2NnjK44ssLEV+m0CAJaS2Ksmorrwj7WxH00jO0SOCW26/tINUnJHToXblDs33I38YQ==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      react: '>=16.8'
+      react-dom: '>=16.8'
+
+  react-router@6.30.6:
+    resolution: {integrity: sha512-5HfK7k5im7LTOB0EqCQmfvy4C13G92Ssj1VTmouTK3AJvyjKTnFuCV0vcMAD/JS+JC4DvDIBRrlAeJIFjh5VWg==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      react: '>=16.8'
 
   react@19.2.4:
     resolution: {integrity: sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==}
@@ -2939,6 +2959,8 @@ snapshots:
 
   '@posthog/types@1.416.1': {}
 
+  '@remix-run/router@1.23.4': {}
+
   '@rolldown/binding-android-arm64@1.0.0-rc.12':
     optional: true
 
@@ -3941,6 +3963,18 @@ snapshots:
     dependencies:
       react: 19.2.4
       scheduler: 0.27.0
+
+  react-router-dom@6.30.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      '@remix-run/router': 1.23.4
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      react-router: 6.30.6(react@19.2.4)
+
+  react-router@6.30.6(react@19.2.4):
+    dependencies:
+      '@remix-run/router': 1.23.4
+      react: 19.2.4
 
   react@19.2.4: {}
 

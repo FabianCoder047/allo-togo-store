@@ -94,11 +94,11 @@ export function PasswordResetPage() {
             <button type="submit" disabled={submitting} className="primary wide">
               {submitting ? 'Enregistrement…' : 'Réinitialiser le mot de passe'}
             </button>
-            <button type="button" className="back-link" onClick={() => navigate('/')}>n              <Icon name="arrow" /> Retour à la boutique
+            <button type="button" className="back-link" onClick={() => navigate('/')}><Icon name="arrow" /> Retour à la boutique
             </button>
           </form>
         </div>
-      </main>
-    </main>
+      </div>
+</main>
   )
 }
