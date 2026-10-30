@@ -113,7 +113,7 @@ const buildEmailProvider = (): EmailProvider => {
     }
     return new HttpEmailProvider(env.EMAIL_API_URL, env.EMAIL_API_TOKEN, env.EMAIL_FROM)
   }
-  if (env.isProduction) {
+  if (env.isProduction && env.EMAIL_PROVIDER !== 'simulated') {
     throw new Error(
       'Un fournisseur email réel est requis en production : EMAIL_PROVIDER=smtp avec MAIL_* ou EMAIL_PROVIDER=http avec EMAIL_API_URL/EMAIL_API_TOKEN.',
     )
