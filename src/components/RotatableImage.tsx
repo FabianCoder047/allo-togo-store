@@ -7,7 +7,7 @@ import {
 } from "react"
 import { Icon } from "./Icon"
 
-type Rotation = { x: number y: number }
+type Rotation = { x: number , y: number }
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))

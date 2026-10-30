@@ -8,7 +8,7 @@ export type DeliveryPoint = {
 
 export type DeliveryPointSelection = DeliveryPoint | null
 
-export type DeliveryPointParseResult = { ok: true point: DeliveryPoint } | {
+export type DeliveryPointParseResult = { ok: true , point: DeliveryPoint } | {
   ok: false
   error: string
 }

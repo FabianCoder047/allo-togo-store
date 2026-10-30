@@ -39,7 +39,7 @@ import type {
 } from "../types"
 
 type Tab = "overview" | "orders" | "catalog" | "quotes" | "users" | "infrastructure" | "audit" | "settings"
-type PendingDeletion = { kind: "catalog" id: string name: string } | {
+type PendingDeletion = { kind: "catalog" , id: string , name: string } | {
   kind: "staff"
   id: string
   name: string
@@ -1317,8 +1317,8 @@ function CatalogProductModal({
   onSaved: () => void
   notify: (message: string, tone?: "success" | "error" | "info") => void
 }) {
-  type MediaItem = { url: string alt: string | null sortOrder: number }
-  type TierRow = { minQuantity: string maxQuantity: string unitPrice: string }
+  type MediaItem = { url: string , alt: string | null , sortOrder: number }
+  type TierRow = { minQuantity: string , maxQuantity: string , unitPrice: string }
 
   const [type, setType] = useState<ProductType>(product?.type ?? initialType)
   const [submitting, setSubmitting] = useState(false)

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 
-export type IconName = "arrow" | "attach" | "bag" | "bell" | "building" | "can" | "car" | "chat" | "check" | "chevron" | "clock" | "catalog" | "compare" | "download" | "fleet" | "headset" | "eye" | "eyeOff" | "home" | "logout" | "mail" | "map" | "menu" | "lock" | "leader" | "mic" | "minus" | "pause" | "play" | "motorbike" | "phone" | "plus" | "rotate" | "search" | "send" | "services" | "shield" | "spark" | "stop" | "tracker" | "trash" | "truck" | "user" | "whatsapp" | "x"
+export type IconName = "arrow" | "attach" | "at" | "bag" | "bell" | "building" | "can" | "car" | "chat" | "check" | "chevron" | "clock" | "catalog" | "compare" | "download" | "fleet" | "headset" | "eye" | "eyeOff" | "home" | "logout" | "mail" | "map" | "menu" | "lock" | "leader" | "mic" | "minus" | "pause" | "play" | "motorbike" | "phone" | "plus" | "rotate" | "search" | "send" | "services" | "shield" | "spark" | "stop" | "tracker" | "trash" | "truck" | "user" | "whatsapp" | "x"
 
 const iconPaths: Record<IconName, ReactNode> = {
   search: (
@@ -244,6 +244,11 @@ const iconPaths: Record<IconName, ReactNode> = {
   ),
   attach: (
     <path d="M21 11.5 12.5 20a5 5 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10.5 18a2 2 0 0 1-3-3l7.5-7.5" />
+  ),
+  at: (
+    <>
+      <path d="M21 11.5 12.5 20a5 5 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10.5 18a2 2 0 0 1-3-3l7.5-7.5" />
+    </>
   ),
   rotate: (
     <>

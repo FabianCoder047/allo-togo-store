@@ -16,12 +16,12 @@ const formatUptime = (seconds: number) => {
   return `${minutes} min`
 }
 
-const statusLabel = (value: { simulated?: boolean configured?: boolean }) => {
+const statusLabel = (value: { simulated?: boolean ,configured?: boolean }) => {
   if (value.simulated) return "Simulation"
   return value.configured ? "Configuré" : "À configurer"
 }
 
-const statusTone = (value: { simulated?: boolean configured?: boolean }) => {
+const statusTone = (value: { simulated?: boolean ,configured?: boolean }) => {
   if (value.simulated) return "draft"
   return value.configured ? "live" : "danger"
 }

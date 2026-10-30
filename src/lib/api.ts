@@ -138,7 +138,7 @@ const parseError = async (response: Response): Promise<ApiError> => {
   let details: unknown
   try {
     const payload = (await response.json()) as {
-      error?: { code?: string message?: string details?: unknown }
+      error?: { code?: string ,message?: string , details?: unknown }
     }
     if (payload.error) {
       code = payload.error.code ?? code
@@ -241,7 +241,7 @@ export const api = {
     ask: (payload: {
       message: string
       sessionId?: string
-      history?: Array<{ role: "client" | "ai" text: string }>
+      history?: Array<{ role: "client" | "ai" , text: string }>
     }) =>
       unwrap(
         request<{ data: AssistantReply }>("/assistant", {
@@ -311,7 +311,7 @@ export const api = {
         mapUrl?: string | null
       }
       requiresTechnician: boolean
-      items: Array<{ productId: string quantity: number }>
+      items: Array<{ productId: string , quantity: number }>
     }) =>
       unwrap(
         request<{ data: OrderGroupCreated }>("/orders", {
@@ -420,7 +420,7 @@ export const api = {
         idempotencyKey?: string
       },
     ) =>
-      request<{ data: { created: unknown order: OrderListRow } }>(
+      request<{ data: { created: unknown , order: OrderListRow } }>(
         `/orders/${encodeURIComponent(id)}/payments`,
         {
           method: "POST",
@@ -434,7 +434,7 @@ export const api = {
             id: string
             visibility: "CLIENT" | "INTERNAL"
             messages: ChatMessage[]
-            participants: Array<{ id: string role: string displayName: string }>
+            participants: Array<{ id: string , role: string , displayName: string }>
           }>
         }>(`/orders/${encodeURIComponent(id)}/conversations`),
       ),
@@ -555,7 +555,7 @@ export const api = {
   auth: {
     login: (email: string, password: string) =>
       unwrap(
-        request<{ data: { accessToken: string user: StaffUser } }>(
+        request<{ data: { accessToken: string ,user: StaffUser } }>(
           "/auth/login",
           {
             method: "POST",
@@ -566,7 +566,7 @@ export const api = {
       ),
     refresh: () =>
       unwrap(
-        request<{ data: { accessToken: string user: StaffUser } }>(
+        request<{ data: { accessToken: string ,user: StaffUser } }>(
           "/auth/refresh",
           {
             method: "POST",
@@ -604,7 +604,7 @@ export const api = {
   // ── Administration ───────────────────────────────────────────────────────
   admin: {
     dashboard: (
-      query: { from?: string to?: string categoryType?: string } = {},
+      query: { from?: string , to?: string , categoryType?: string } = {},
     ) => {
       const params = new URLSearchParams()
       for (const [key, value] of Object.entries(query)) {
@@ -613,7 +613,7 @@ export const api = {
       const suffix = params.size ? `?${params.toString()}` : ""
       return unwrap(request<{ data: Dashboard }>(`/admin/dashboard${suffix}`))
     },
-    users: (query: { role?: string includeInactive?: boolean } = {}) => {
+    users: (query: { role?: string , includeInactive?: boolean } = {}) => {
       const params = new URLSearchParams()
       if (query.role) params.set("role", query.role)
       if (query.includeInactive) params.set("includeInactive", "true")
@@ -724,7 +724,7 @@ export const api = {
                 simulated: boolean
                 configured: boolean
               }
-              email: { provider: string simulated: boolean configured: boolean }
+              email: { provider: string , simulated: boolean , configured: boolean }
             }
             stored: Record<string, unknown>
           }
@@ -774,7 +774,7 @@ export const api = {
         ),
       uploadMedia: (file: File) =>
         unwrap(
-          request<{ data: { url: string type: string } }>(
+          request<{ data: { url: string , type: string } }>(
             "/admin/catalog/uploads",
             {
               method: "POST",
@@ -851,7 +851,7 @@ export const api = {
       }>(`/staff/missions${suffix}`)
     },
     knowledge: {
-      list: (query?: { active?: boolean q?: string }) => {
+      list: (query?: { active?: boolean , q?: string }) => {
         const params = new URLSearchParams()
         if (query?.active !== undefined)
           params.set("active", String(query.active))

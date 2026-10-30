@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" platform: string }>
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" , platform: string }>
 }
 
 export function PwaControls() {

@@ -55,7 +55,7 @@ export interface Product {
   sortOrder: number
   images: ProductImage[]
   videos: ProductVideo[]
-  category: { id: string name: string slug: string type: ProductType }
+  category: { id: string , name: string , slug: string , type: ProductType }
 }
 
 export interface Category {
@@ -93,7 +93,7 @@ export interface AuditLogEntry {
   ip: string | null
   userAgent: string | null
   createdAt: string
-  actor: { id: string name: string role: string } | null
+  actor: { id: string , name: string , role: string } | null
 }
 
 export interface AuditLogPage {
@@ -112,8 +112,8 @@ export interface InfrastructureOverview {
     environment: string
     nodeVersion: string
     uptimeSeconds: number
-    database: { status: "ok" | "degraded" latencyMs: number }
-    memory: { rssMb: number heapUsedMb: number }
+    database: { status: "ok" | "degraded" , latencyMs: number }
+    memory: { rssMb: number , heapUsedMb: number }
   }
   users: {
     active: number
@@ -135,9 +135,9 @@ export interface InfrastructureOverview {
     quotes7d: number
   }
   integrations: {
-    whatsapp: { provider: string simulated: boolean configured: boolean }
-    email: { provider: string simulated: boolean configured: boolean }
-    bictorys: { enabled: boolean mode: string mock: boolean }
+    whatsapp: { provider: string ,simulated: boolean ,configured: boolean }
+    email: { provider: string ,simulated: boolean ,configured: boolean }
+    bictorys: { enabled: boolean ,mode: string ,mock: boolean }
   }
 }
 
@@ -231,7 +231,7 @@ export interface PublicTracking {
     status: string
     statusLabel: string
   }>
-  access: { conversationProtected: boolean message: string }
+  access: { conversationProtected: boolean , message: string }
 }
 
 export type MessageKind = "TEXT" | "AUDIO" | "LOCATION" | "IMAGE" | "VIDEO"
@@ -257,7 +257,7 @@ export interface ChatMessage {
 
 export type TrackingMessage = ChatMessage
 
-export type ChatMessagePayload = { kind: "TEXT" body: string } | {
+export type ChatMessagePayload = { kind: "TEXT" , body: string } | {
   kind: "AUDIO"
   audioData: string
   durationMs: number
@@ -344,9 +344,9 @@ export interface OrderListRow {
   fulfillmentCompletedAt: string | null
   closedAt: string | null
   items: OrderItem[]
-  assignedTo: { id: string name: string role: string } | null
-  group: { id: string publicRef: string } | null
-  _count?: { payments: number notes: number }
+  assignedTo: { id: string ,name: string ,role: string } | null
+  group: { id: string ,publicRef: string } | null
+  _count?: { payments: number ,notes: number }
 }
 
 export interface OrderHistoryEntry {
@@ -383,7 +383,7 @@ export interface Conversation {
   id: string
   visibility: "CLIENT" | "INTERNAL"
   messages: ChatMessage[]
-  participants: Array<{ id: string role: string displayName: string }>
+  participants: Array<{ id: string , role: string , displayName: string }>
 }
 
 export type OrderAction = "confirm" | "reject" | "assign" | "start" | "deliver" | "fail" | "pickup" | "cancel"
@@ -402,12 +402,12 @@ export interface OrderDetail
     active: boolean
     isLead: boolean
     instructions: string | null
-    staff: { id: string name: string role: string phone: string | null }
+    staff: { id: string , name: string , role: string , phone: string | null }
   }>
 }
 
 export interface Dashboard {
-  period: { from: string to: string }
+  period: { from: string , to: string }
   indicators: {
     pendingConfirmation: number
     accepted: number
@@ -423,11 +423,11 @@ export interface Dashboard {
     pendingQuotes: number
   }
   charts: {
-    ordersByDay: Array<{ date: string count: number }>
-    paymentsByDay: Array<{ date: string amount: number }>
-    statusDistribution: Array<{ status: string count: number }>
-    fulfillmentDistribution: Array<{ fulfillmentMode: string count: number }>
-    salesByCategory: Array<{ categoryType: string total: number count: number }>
+    ordersByDay: Array<{ date: string , count: number }>
+    paymentsByDay: Array<{ date: string , amount: number }>
+    statusDistribution: Array<{ status: string , count: number }>
+    fulfillmentDistribution: Array<{ fulfillmentMode: string , count: number }>
+    salesByCategory: Array<{ categoryType: string , total: number , count: number }>
     staffActivity: Array<{
       id: string
       name: string
@@ -447,8 +447,8 @@ export interface Dashboard {
     paidAmount: number
     createdAt: string
     categoryType: string
-    items: Array<{ productName: string quantity: number }>
-    assignedTo: { name: string role: string } | null
+    items: Array<{ productName: string , quantity: number }>
+    assignedTo: { name: string , role: string } | null
   }>
 }
 
@@ -464,7 +464,7 @@ export interface QuoteRequest {
   adminNotes: string | null
   createdAt: string
   updatedAt: string
-  service?: { id: string name: string } | null
+  service?: { id: string , name: string } | null
 }
 
 export type AssistantAction = "ANSWER" | "ESCALATE" | "OUT_OF_SCOPE" | "CLARIFY"
@@ -527,7 +527,7 @@ export interface AssistantKnowledge {
   active: boolean
   createdAt: string
   updatedAt: string
-  createdBy?: { id: string name: string } | null
+  createdBy?: { id: string , name: string } | null
 }
 
 export interface StaffNotification {
@@ -550,5 +550,5 @@ export interface StaffMember {
 }
 
 export interface ApiErrorShape {
-  error?: { code?: string message?: string details?: unknown }
+  error?: { code?: string , message?: string , details?: unknown }
 }

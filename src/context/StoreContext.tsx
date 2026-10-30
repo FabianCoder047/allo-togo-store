@@ -20,7 +20,7 @@ import { identifyAnalytics, resetAnalytics, trackEvent } from "../lib/analytics"
 import type { Product, StaffUser } from "../types"
 
 type ToastTone = "success" | "error" | "info"
-type Toast = { message: string tone: ToastTone }
+type Toast = { message: string , tone: ToastTone }
 
 interface StoreContextValue {
   products: Product[]
@@ -35,7 +35,7 @@ interface StoreContextValue {
   clearCart: () => void
   cartCount: number
   cartSubtotal: number
-  cartLines: Array<{ product: Product quantity: number }>
+  cartLines: Array<{ product: Product , quantity: number }>
   user: StaffUser | null
   authLoading: boolean
   login: (email: string, password: string) => Promise<StaffUser>
@@ -220,7 +220,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const product = products.find((item) => item.id === id)
           return product ? { product, quantity } : null
         })
-        .filter((line): line is { product: Product quantity: number } =>
+        .filter((line): line is { product: Product ,quantity: number } =>
           Boolean(line),
         ),
     [cart, products],
