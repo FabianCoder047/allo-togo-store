@@ -72,22 +72,6 @@ main()
 // Execute cleanup and user creation at seed start
 await deleteAllUsersExceptDirector()
 await createNewUsers()
-    categorySlug: 'traceurs-gps',
-    type: 'GPS',
-    name: 'Traceur GPS Compact',
-    slug: 'traceur-gps-compact',
-    sku: 'GPS-COMPACT-01',
-    shortDescription: 'Un format discret pour suivre votre véhicule au quotidien.',
-    description:
-      'Solution de géolocalisation compacte destinée aux véhicules personnels. Le traceur permet de consulter la position et l’historique selon la configuration retenue. Les caractéristiques définitives, l’abonnement et les conditions d’installation sont confirmés par Allo Togo avant la commande.',
-    price: 35000,
-    featured: true,
-    manageStock: true,
-    stock: 25,
-    specs: {
-      idealFor: 'Voiture personnelle',
-      installation: 'Discrète — méthode à confirmer',
-      power: 'Alimentation à confirmer',
       connectivity: 'Réseau mobile à confirmer',
       tracking: 'Position et historique selon configuration',
       alerts: 'Options à confirmer',
