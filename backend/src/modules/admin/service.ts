@@ -28,7 +28,7 @@ const publicUserSelect = {
 } as const
 
 export const listUsers = async (
-  options: { role?: StaffRole includeInactive?: boolean } = {},
+  options: { role?: StaffRole , includeInactive?: boolean } = {},
 ) => {
   return prisma.user.findMany({
     where: {
@@ -56,7 +56,7 @@ const splitFullName = (fullName: string) => {
 
 export const createUser = async (
   input: z.infer<typeof userCreateSchema>,
-  actor: { id: string name: string },
+  actor: { id: string , name: string },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -124,7 +124,7 @@ export const createUser = async (
 export const updateUser = async (
   id: string,
   input: z.infer<typeof userUpdateSchema>,
-  actor: { id: string name: string },
+  actor: { id: string , name: string },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -181,7 +181,7 @@ export const updateUser = async (
 
 export const deactivateUser = async (
   id: string,
-  actor: { id: string name: string },
+  actor: { id: string , name: string },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -216,7 +216,7 @@ export const deactivateUser = async (
 export const resetUserPassword = async (
   id: string,
   input: z.infer<typeof resetPasswordSchema>,
-  actor: { id: string name: string },
+  actor: { id: string , name: string },
   ip?: string,
   userAgent?: string,
 ) => {

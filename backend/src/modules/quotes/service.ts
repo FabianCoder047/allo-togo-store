@@ -125,7 +125,7 @@ export const getQuote = async (id: string) => {
 export const updateQuote = async (
   id: string,
   input: z.infer<typeof quoteUpdateSchema>,
-  actor: { id: string name: string },
+  actor: { id: string , name: string },
   ip?: string,
   userAgent?: string,
 ) => {

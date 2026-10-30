@@ -21,7 +21,7 @@ export const computeLineTotal = (unitPrice: number, quantity: number) => {
 }
 
 export const computeOrderTotals = (
-  lines: { unitPrice: number quantity: number }[],
+  lines: { unitPrice: number , quantity: number }[],
   deliveryFee = 0,
 ) => {
   const subtotal = sumAmounts(

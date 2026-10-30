@@ -10,7 +10,7 @@ import { getBictorysProvider } from "./bictorys.js"
 
 export const createBictorysAttempt = async (
   orderId: string,
-  actor: { id: string name: string },
+  actor: { id: string , name: string },
   ip?: string,
   userAgent?: string,
 ) => {

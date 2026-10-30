@@ -86,10 +86,10 @@ export const ORDER_ACTION_RULES: Record<OrderAction, ActionRule> = {
 export type OrderActionContext = {
   status: OrderStatus
   fulfillmentMode: FulfillmentMode
-  assignments?: Array<{ staffId: string active: boolean isLead?: boolean }>
+  assignments?: Array<{ staffId: string, active: boolean, isLead?: boolean }>
 }
 
-export type OrderActionUser = { id: string role: StaffRole }
+export type OrderActionUser = { id: string, role: StaffRole }
 
 export const isAssignedToOrder = (order: OrderActionContext, userId: string) =>
   (order.assignments ?? []).some(

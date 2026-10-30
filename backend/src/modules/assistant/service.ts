@@ -8,10 +8,10 @@ import { realtime } from "../../realtime/events.js"
 import { statusLabel } from "../orders/stateMachine.js"
 import type { AssistantAskInput } from "./schemas.js"
 
-type CatalogProduct = Product & { category: Category images: ProductImage[] }
+type CatalogProduct = Product & { category: Category ,images: ProductImage[] }
 type AssistantAction = "ANSWER" | "ESCALATE" | "OUT_OF_SCOPE" | "CLARIFY"
 
-export type AssistantSuggestion = { label: string path: string }
+export type AssistantSuggestion = { label: string , path: string }
 
 export type AssistantResult = {
   reply: string
@@ -21,7 +21,7 @@ export type AssistantResult = {
   suggestions?: AssistantSuggestion[]
 }
 
-type ProductMatch = { product: CatalogProduct score: number margin: number }
+type ProductMatch = { product: CatalogProduct , score: number , margin: number }
 
 const normalize = (value: string) =>
   value
@@ -528,13 +528,13 @@ const hasAny = (tokens: Set<string>, words: string[]) =>
 const hasPhrase = (normalized: string, phrase: string) =>
   normalized.includes(normalize(phrase))
 
-type KnowledgeItem = { question: string answer: string keywords: string }
+type KnowledgeItem = { question: string , answer: string , keywords: string }
 type KnowledgeWhere = {
   active?: boolean
   OR?: Array<{
-    question?: { contains: string mode: "insensitive" }
-    answer?: { contains: string mode: "insensitive" }
-    keywords?: { contains: string mode: "insensitive" }
+    question?: { contains: string , mode: "insensitive" }
+    answer?: { contains: string , mode: "insensitive" }
+    keywords?: { contains: string , mode: "insensitive" }
   }>
 }
 
@@ -543,7 +543,7 @@ const matchKnowledge = (message: string, knowledges: KnowledgeItem[]) => {
     (token) => token.length >= 2 && !STOP_WORDS.has(token),
   )
   if (tokens.length === 0 || knowledges.length === 0) return null
-  let best: { knowledge: KnowledgeItem score: number } | null = null
+  let best: { knowledge: KnowledgeItem , score: number } | null = null
   for (const knowledge of knowledges) {
     const haystack = tokenize(`${knowledge.question} ${knowledge.keywords}`)
     let score = 0
@@ -612,7 +612,7 @@ const clarify = () =>
   )
 
 const settingValue = (
-  rows: Array<{ key: string value: unknown }>,
+  rows: Array<{ key: string , value: unknown }>,
   key: string,
 ): string | null => {
   const row = rows.find((item) => item.key === key)
@@ -1400,7 +1400,7 @@ const knowledgeDelegate = (prisma as unknown as {
 }).assistantKnowledge
 
 export const listKnowledge = async (
-  options: { activeOnly?: boolean q?: string } = {},
+  options: { activeOnly?: boolean , q?: string } = {},
 ) => {
   const where: KnowledgeWhere = {}
   if (options.activeOnly !== false) where.active = true

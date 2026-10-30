@@ -39,7 +39,7 @@ const uniqueProductSlug = async (name: string, exceptId?: string) => {
 }
 
 export const listCategories = async (
-  options: { includeInactive?: boolean type?: ProductType } = {},
+  options: { includeInactive?: boolean , type?: ProductType } = {},
 ) => {
   return prisma.category.findMany({
     where: {

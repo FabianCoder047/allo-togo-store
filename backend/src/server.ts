@@ -37,7 +37,7 @@ io.use((socket, next) => {
 })
 
 io.on("connection", (socket) => {
-  const user = socket.data.user as { id: string role: string name: string }
+  const user = socket.data.user as { id: string , role: string , name: string }
   socket.join(`staff:${user.id}`)
   if (user.role === "DIRECTOR" || user.role === "COMMERCIAL")
     socket.join("staff:all")
@@ -46,7 +46,7 @@ io.on("connection", (socket) => {
     "join:order",
     async (
       orderId: string,
-      ack?: (response: { ok: boolean error?: string }) => void,
+      ack?: (response: { ok: boolean , error?: string }) => void,
     ) => {
       try {
         const order = await prisma.order.findUnique({
@@ -79,7 +79,7 @@ io.on("connection", (socket) => {
 
 realtime.on(
   "message:new",
-  (payload: { orderId: string visibility: string }) => {
+  (payload: { orderId: string , visibility: string }) => {
     io.to(`order:${payload.orderId}`).emit("message:new", payload)
   },
 )

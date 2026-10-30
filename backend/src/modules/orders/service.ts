@@ -65,7 +65,7 @@ import type {
 type Tx = Prisma.TransactionClient
 
 const assertFullyPaidForClosure = (
-  order: { total: number paidAmount: number },
+  order: { total: number , paidAmount: number },
   actionLabel: string,
 ) => {
   if (isFullyPaid(order)) return
@@ -280,7 +280,7 @@ export const createOrderGroup = async (
       },
     })
 
-    const orders: Order & { items: OrderItem[] }[] = []
+    const orders: Array<Order & { items: OrderItem[] }> = []
 
     for (const [type, typeProducts] of groups.entries()) {
       const items = typeProducts.map((product) => {
@@ -476,7 +476,7 @@ const scopedWhere = (user: {
 
 export const listOrders = async (
   query: z.infer<typeof orderListQuerySchema>,
-  user: { id: string role: StaffRole },
+  user: { id: string , role: StaffRole },
 ) => {
   const where: Prisma.OrderWhereInput = {
     ...scopedWhere(user),
@@ -543,7 +543,7 @@ export const listOrders = async (
 
 const assertOrderAccess = (
   order: OrderWithDetails,
-  user: { id: string role: StaffRole },
+  user: { id: string , role: StaffRole },
 ) => {
   if (user.role === "TECHNICIAN" || user.role === "DELIVERY") {
     if (
@@ -558,7 +558,7 @@ const assertOrderAccess = (
 
 export const getOrderById = async (
   id: string,
-  user: { id: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
 ) => {
   const order = await prisma.order.findFirst({
     where: { OR: [{ id }, { trackingCode: id }, { orderNumber: id }] },
@@ -636,10 +636,10 @@ const assertOrderAction = (
   order: {
     status: Order["status"]
     fulfillmentMode: Order["fulfillmentMode"]
-    assignments: Array<{ staffId: string active: boolean isLead: boolean }>
+    assignments: Array<{ staffId: string ,active: boolean , isLead: boolean }>
   },
   action: OrderAction,
-  user: { id: string role: StaffRole },
+  user: { id: string , role: StaffRole },
 ) => {
   const context: OrderActionContext = {
     status: order.status,
@@ -691,7 +691,7 @@ const restoreOrderStock = async (
 }
 
 type TransitionOptions = {
-  user: { id: string name: string role?: StaffRole }
+  user: { id: string , name: string , role?: StaffRole }
   actorType?: string
   comment?: string | null
   publicComment?: boolean
@@ -755,7 +755,7 @@ const applyTransition = async (
 export const confirmOrder = async (
   id: string,
   comment: string | undefined,
-  user: { id: string name: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -802,7 +802,7 @@ export const confirmOrder = async (
 export const cancelOrder = async (
   id: string,
   reason: string,
-  user: { id: string name: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -919,7 +919,7 @@ export const expireUncollectedPickupOrders = async (now = new Date()) => {
 export const rejectOrder = async (
   id: string,
   reason: string,
-  user: { id: string name: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -959,7 +959,7 @@ export const rejectOrder = async (
 export const startOrderCourse = async (
   id: string,
   comment: string | undefined,
-  user: { id: string name: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -992,7 +992,7 @@ export const startOrderCourse = async (
 export const completeOrderDelivery = async (
   id: string,
   input: z.infer<typeof deliveryOutcomeSchema>,
-  user: { id: string name: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -1061,7 +1061,7 @@ export const completeOrderDelivery = async (
 export const failOrderDelivery = async (
   id: string,
   input: z.infer<typeof deliveryOutcomeSchema>,
-  user: { id: string name: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -1103,7 +1103,7 @@ export const failOrderDelivery = async (
 export const confirmOrderPickup = async (
   id: string,
   input: z.infer<typeof pickupSchema>,
-  user: { id: string name: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -1152,7 +1152,7 @@ export const confirmOrderPickup = async (
 export const updateOrderStatus = async (
   id: string,
   input: z.infer<typeof statusUpdateSchema>,
-  user: { id: string name: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -1180,7 +1180,7 @@ const roleLabelForAssignment = (role: StaffRole) =>
 export const assignOrder = async (
   id: string,
   input: z.infer<typeof assignSchema>,
-  user: { id: string name: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -1337,7 +1337,7 @@ export const assignOrder = async (
 export const addOrderNote = async (
   id: string,
   body: string,
-  user: { id: string name: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -1365,7 +1365,7 @@ export const addOrderNote = async (
 export const recordPayment = async (
   id: string,
   input: z.infer<typeof paymentSchema>,
-  user: { id: string name: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
   ip?: string,
   userAgent?: string,
 ) => {
@@ -1509,7 +1509,7 @@ export const recordPayment = async (
 
 export const orderSummary = (
   order: OrderWithDetails,
-  user: { id: string role: StaffRole },
+  user: { id: string , name: string , role: StaffRole },
 ) => ({
   ...order,
   remainingDue: remainingDue(order.total, order.paidAmount),

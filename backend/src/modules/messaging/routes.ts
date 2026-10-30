@@ -13,7 +13,7 @@ const orderParams = z.object({ id: z.string().min(1) })
 
 const loadConversation = async (
   id: string,
-  user: { id: string role: string },
+  user: { id: string , role: string },
 ) => {
   const conversation = await prisma.conversation.findUnique({
     where: { id },

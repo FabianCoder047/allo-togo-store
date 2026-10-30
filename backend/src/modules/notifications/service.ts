@@ -216,7 +216,7 @@ export const enqueuePaymentValidationNotification = async (order: Order) => {
 export const enqueueCashPaymentRecordedNotification = async (
   order: Order,
   paymentAmount: number,
-  recordedBy: { id: string name: string },
+  recordedBy: { id: string , name: string },
 ) => {
   // Notifier celui qui a remis la somme (chef d'équipe assigné) que
   // l'encaissement a été enregistré par le commercial ou le directeur.
