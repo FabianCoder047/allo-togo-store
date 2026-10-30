@@ -176,7 +176,7 @@ export const listTechnicalLogs = async (query: {
 }) => {
   const files = (await readdir(technicalLogDirectory))
     .map((file) => ({ file, date: logFilePattern.exec(file)?.[1] }))
-    .filter((entry): entry is { file: string date: string } =>
+    .filter((entry): entry is { file: string , date: string } =>
       Boolean(entry.date),
     )
     .sort((left, right) => right.date.localeCompare(left.date))
