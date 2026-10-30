@@ -37,9 +37,21 @@ async function deleteAllUsersExceptDirector() {
   }
 }
 
+async function userExists(email: string) {
+  const existing = await prisma.user.findFirst({ where: { email } })
+  return !!existing
+}
+
 async function createNewUsers() {
   for (const userData of NEW_USERS) {
     if (userData.email === 'directeur@allotogo.test') continue
+
+    // Skip if user already exists (idempotent re-runs)
+    if (await userExists(userData.email)) {
+      console.log(`User ${userData.email} already exists, skipping creation.`)
+      continue
+    }
+
     const [firstName, ...lastNameParts] = userData.name.split(' ')
     const passwordHash = await hash(userData.password)
     const lastName = lastNameParts.join(' ') || null
