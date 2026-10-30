@@ -107,7 +107,6 @@ const metadataValueLabels: Record<string, string> = {
   DELIVERY: "Livreur",
   DIRECTOR: "Directeur",
   DRINK: "Boisson",
-  EMPLOYEE: "Employé",
   GPS: "Traceur GPS",
   MOBILE_MONEY: "Mobile Money",
   FLOOZ: "Flooz",

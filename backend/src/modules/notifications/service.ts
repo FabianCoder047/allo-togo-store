@@ -110,7 +110,7 @@ export const enqueueOrderCreatedSmsNotification = async (order: OrderForNotifica
 
 export const enqueueStaffNewOrderNotifications = async (order: Order) => {
   const recipients = await prisma.user.findMany({
-    where: { active: true, role: { in: ['DIRECTOR', 'COMMERCIAL', 'EMPLOYEE'] } },
+    where: { active: true, role: { in: ['DIRECTOR', 'COMMERCIAL'] } },
     select: { id: true },
   })
   if (recipients.length === 0) return { count: 0 }

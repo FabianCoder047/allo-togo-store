@@ -129,7 +129,6 @@ export const sendEmail = async (message: EmailMessage) => {
 const ROLE_LABELS: Record<StaffRole, string> = {
   DIRECTOR: 'directeur',
   ADMIN: 'informaticien',
-  EMPLOYEE: 'employé',
   COMMERCIAL: 'agent commercial',
   TECHNICIAN: 'technicien',
   DELIVERY: 'livreur',

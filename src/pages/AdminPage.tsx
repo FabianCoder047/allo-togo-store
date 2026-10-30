@@ -110,7 +110,6 @@ export function AdminPage({ navigate }: { navigate: (path: string) => void }) {
   if (
     user.role !== "DIRECTOR" &&
     user.role !== "ADMIN" &&
-    user.role !== "EMPLOYEE" &&
     user.role !== "COMMERCIAL"
   ) {
     return (
@@ -361,7 +360,6 @@ function AdminWorkspace({
         "settings",
       ],
       ADMIN: ["users", "infrastructure", "audit", "settings"],
-      EMPLOYEE: ["overview", "orders", "catalog", "quotes", "settings"],
       COMMERCIAL: ["overview", "orders", "catalog", "quotes", "settings"],
       TECHNICIAN: [],
       DELIVERY: [],
@@ -1457,6 +1455,21 @@ function CatalogProductModal({
             event.preventDefault()
             const form = new FormData(event.currentTarget)
             const name = String(form.get("name") ?? "").trim()
+            const categoryId = String(form.get("categoryId") ?? "").trim()
+            const priceRaw = String(form.get("price") ?? "").trim()
+            const price = Number(priceRaw)
+            if (!name) {
+              notify("Le nom du contenu est obligatoire.", "error")
+              return
+            }
+            if (!categoryId) {
+              notify("La catégorie est obligatoire.", "error")
+              return
+            }
+            if (!priceRaw || Number.isNaN(price) || price < 0) {
+              notify("Le prix est obligatoire et doit être un nombre valide.", "error")
+              return
+            }
             const specs = Object.fromEntries(
               String(form.get("specs") ?? "")
                 .split("\n")
@@ -1501,7 +1514,7 @@ function CatalogProductModal({
                 form.get("shortDescription") ?? "",
               ).trim(),
               description: String(form.get("description") ?? "").trim(),
-              price: Number(form.get("price")),
+              price,
               previousPrice: String(form.get("previousPrice") ?? "")
                 ? Number(form.get("previousPrice"))
                 : null,
@@ -1556,7 +1569,6 @@ function CatalogProductModal({
             <label>
               Nom
               <input
-                required
                 name="name"
                 minLength={2}
                 maxLength={120}
@@ -1578,7 +1590,6 @@ function CatalogProductModal({
             <label>
               Catégorie
               <select
-                required
                 name="categoryId"
                 value={categoryId}
                 onChange={(event) => setSelectedCategoryId(event.target.value)}
@@ -1593,7 +1604,6 @@ function CatalogProductModal({
             <label>
               Référence / SKU
               <input
-                required
                 name="sku"
                 minLength={2}
                 maxLength={60}
@@ -1603,7 +1613,6 @@ function CatalogProductModal({
             <label>
               Prix actuel (FCFA)
               <input
-                required
                 type="number"
                 name="price"
                 min="0"
@@ -1658,7 +1667,6 @@ function CatalogProductModal({
             <label className="catalog-product-wide">
               Résumé
               <input
-                required
                 name="shortDescription"
                 minLength={2}
                 maxLength={240}
@@ -1668,7 +1676,6 @@ function CatalogProductModal({
             <label className="catalog-product-wide">
               Description complète
               <textarea
-                required
                 name="description"
                 minLength={2}
                 maxLength={5000}
@@ -1700,7 +1707,6 @@ function CatalogProductModal({
                     type="number"
                     min="1"
                     step="1"
-                    required
                     value={tier.minQuantity}
                     placeholder="Qté min"
                     onChange={(event) =>
@@ -1735,7 +1741,6 @@ function CatalogProductModal({
                     type="number"
                     min="1"
                     step="1"
-                    required
                     value={tier.unitPrice}
                     placeholder="Prix FCFA"
                     onChange={(event) =>
@@ -2023,7 +2028,7 @@ function CreateUserModal({
               const payload = {
                 name: String(form.get("name") ?? "").trim(),
                 email: String(form.get("email") ?? "").trim(),
-                role: String(form.get("role") ?? "EMPLOYEE"),
+                role: String(form.get("role") ?? "COMMERCIAL"),
                 phone: String(form.get("phone") ?? "").trim(),
               }
               if (member) {
@@ -2076,7 +2081,7 @@ function CreateUserModal({
             </label>
             <label>
               Rôle
-              <select name="role" defaultValue={member?.role ?? "EMPLOYEE"}>
+              <select name="role" defaultValue={member?.role ?? "COMMERCIAL"}>
                 {Object.entries(roleLabels).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}

@@ -75,7 +75,7 @@ export interface StaffUser {
   firstName?: string | null
   lastName?: string | null
   email: string
-  role: "DIRECTOR" | "ADMIN" | "EMPLOYEE" | "COMMERCIAL" | "TECHNICIAN" | "DELIVERY"
+  role: "DIRECTOR" | "ADMIN" | "COMMERCIAL" | "TECHNICIAN" | "DELIVERY"
   phone?: string | null
   active?: boolean
   mustChangePassword?: boolean

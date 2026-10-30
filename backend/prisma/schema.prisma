@@ -17,7 +17,7 @@ enum StaffRole {
   DIRECTOR
   /// Informaticien : infrastructure, affluence, audit technique et PostHog.
   ADMIN
-  EMPLOYEE
+  /// Agent commercial.
   COMMERCIAL
   TECHNICIAN
   DELIVERY

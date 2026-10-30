@@ -31,7 +31,6 @@ export const TEST_IT = {
 }
 
 export const TEST_STAFF = {
-  employee: { email: 'employe@allotogo.test', password: 'EmployeAlloTogo!2026' },
   commercial: { email: 'commercial@allotogo.test', password: 'CommercialAlloTogo!2026' },
   technician: { email: 'technicien@allotogo.test', password: 'TechnicienAlloTogo!2026' },
   delivery: { email: 'livreur@allotogo.test', password: 'LivreurAlloTogo!2026' },

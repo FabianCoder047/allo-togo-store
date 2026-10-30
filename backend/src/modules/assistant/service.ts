@@ -354,7 +354,7 @@ const escalate = async (
     .slice(-2)
     .map((item) => item.text)
   const staff = await prisma.user.findMany({
-    where: { active: true, role: { in: ['DIRECTOR', 'EMPLOYEE', 'COMMERCIAL'] } },
+    where: { active: true, role: { in: ['DIRECTOR', 'COMMERCIAL'] } },
     select: { id: true },
   })
 

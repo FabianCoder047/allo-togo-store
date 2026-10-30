@@ -320,7 +320,6 @@ Pour ouvrir la conversation, le client doit fournir **le numéro utilisé lors d
 | `DIRECTOR` (Directeur) | Gestion complète, y compris utilisateurs, paramètres, audit et infrastructure |
 | `ADMIN` (Informaticien) | Gestion complète des comptes du personnel, infrastructure, affluence/PostHog, logs techniques et lecture du journal d’audit ; pas d’accès aux commandes, au catalogue ou aux paiements |
 | `COMMERCIAL` | Commandes (confirmation, refus, affectation), devis, paiements, catalogue en lecture, conversations |
-| `EMPLOYEE` | Commandes en lecture, **retrait en agence**, devis, paiements, catalogue en lecture, conversations |
 | `TECHNICIAN` | Uniquement les commandes affectées : avancement et conversation |
 | `DELIVERY` | Uniquement les commandes affectées : avancement et conversation |
 

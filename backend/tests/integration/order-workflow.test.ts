@@ -70,7 +70,7 @@ const orderDetail = async (orderId: string, token: string) => {
 
 beforeAll(async () => {
   admin = await login(TEST_ADMIN.email, TEST_ADMIN.password)
-  employee = await login(TEST_STAFF.employee.email, TEST_STAFF.employee.password)
+  employee = await login(TEST_STAFF.commercial.email, TEST_STAFF.commercial.password)
   commercial = await login(TEST_STAFF.commercial.email, TEST_STAFF.commercial.password)
   technician = await login(TEST_STAFF.technician.email, TEST_STAFF.technician.password)
   delivery = await login(TEST_STAFF.delivery.email, TEST_STAFF.delivery.password)

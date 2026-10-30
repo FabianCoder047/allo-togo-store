@@ -66,7 +66,7 @@ adminRouter.get(
   requirePermission('users:manage'),
   validate({
     query: z.object({
-      role: z.enum(['DIRECTOR', 'ADMIN', 'EMPLOYEE', 'COMMERCIAL', 'TECHNICIAN', 'DELIVERY']).optional(),
+      role: z.enum(['DIRECTOR', 'ADMIN', 'COMMERCIAL', 'TECHNICIAN', 'DELIVERY']).optional(),
       includeInactive: z.enum(['true', 'false']).optional(),
     }),
   }),

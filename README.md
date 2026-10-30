@@ -174,7 +174,6 @@ seed, même lorsque les comptes de démonstration sont désactivés.
 | --- | --- | --- |
 | Directeur | `admin@allotogo.test` | `AdminAlloTogo!2026` |
 | Informaticien (`ADMIN`) | `it@allotogo.test` | `InfoAlloTogo!2026` |
-| Employé | `employe@allotogo.test` | `EmployeAlloTogo!2026` |
 | Agent commercial | `commercial@allotogo.test` | `CommercialAlloTogo!2026` |
 | Technicien | `technicien@allotogo.test` | `TechnicienAlloTogo!2026` |
 | Livreur | `livreur@allotogo.test` | `LivreurAlloTogo!2026` |
@@ -327,7 +326,7 @@ Détail complet : [`docs/REGLES_METIER.md`](docs/REGLES_METIER.md).
 - Jeton d'accès JWT court en mémoire côté client ; **cookie de rafraîchissement httpOnly**, `SameSite=Lax`,
   rotation et révocation en base.
 - Aucun jeton dans `localStorage`.
-- Autorisation par permissions côté serveur (`DIRECTOR` pour la direction, `ADMIN` pour l’informatique, puis `EMPLOYEE`, `COMMERCIAL`, `TECHNICIAN` et `DELIVERY`).
+- Autorisation par permissions côté serveur (`DIRECTOR` pour la direction, `ADMIN` pour l’informatique, puis `COMMERCIAL`, `TECHNICIAN` et `DELIVERY`).
 - Validation systématique des entrées avec Zod.
 - Helmet, CORS restrictif (en développement, les origines locales sont tolérées), rate limiting
   (connexion, suivi, vérification téléphonique, commandes).
@@ -347,7 +346,7 @@ chaque message : les noms, prix, stocks et liens produits ne sont pas figés dan
   numéro de commande, livraison, paiement, devis, contact, garantie, installation).
 - **Question Allo Togo non couverte** : réponse « je vais faire appel à un employé de Allo Togo »,
   création d’un fil `AssistantThread` lié à la session cliente, notification
-  `ASSISTANT_ESCALATION` pour chaque compte `DIRECTOR`/`EMPLOYEE`/`COMMERCIAL` actif, diffusion Socket.IO dans le
+  `ASSISTANT_ESCALATION` pour chaque compte `DIRECTOR`/`COMMERCIAL` actif, diffusion Socket.IO dans le
   salon `staff:all` et bip Web Audio côté navigateur.
 - **Reprise humaine** : depuis le bandeau, la cloche de notifications ou le panneau « Messages
   assistant », un employé ouvre la discussion, lit l’historique et répond au client. La réponse est

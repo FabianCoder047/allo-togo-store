@@ -72,7 +72,6 @@ export function OrderDetailPanel({
   const canPickup = actions.includes("pickup")
   const canManage =
     user.role === "DIRECTOR" ||
-    user.role === "EMPLOYEE" ||
     user.role === "COMMERCIAL"
   const cashHandoverPending =
     order?.status === "LIVREE" &&

@@ -102,7 +102,6 @@ export const quoteStatusLabels: Record<string, string> = {
 export const roleLabels: Record<string, string> = {
   DIRECTOR: "Directeur",
   ADMIN: "Informaticien",
-  EMPLOYEE: "Employé",
   COMMERCIAL: "Agent commercial",
   TECHNICIAN: "Technicien",
   DELIVERY: "Livreur",

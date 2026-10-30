@@ -22,7 +22,7 @@ const escalationCount = () =>
   })
 
 beforeAll(async () => {
-  employee = await login(TEST_STAFF.employee.email, TEST_STAFF.employee.password)
+  employee = await login(TEST_STAFF.commercial.email, TEST_STAFF.commercial.password)
   gpsProductId = (await productBySku('GPS-COMPACT-01')).id
 })
 

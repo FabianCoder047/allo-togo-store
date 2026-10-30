@@ -46,7 +46,7 @@ export function StaffAssistantAlerts({ navigate }: { navigate: (path: string) =>
   const [alert, setAlert] = useState<StaffAlert | null>(null)
   const audioRef = useRef<AudioContext | null>(null)
 
-  const isAllowed = user?.role === 'DIRECTOR' || user?.role === 'EMPLOYEE' || user?.role === 'COMMERCIAL'
+  const isAllowed = user?.role === 'DIRECTOR' || user?.role === 'COMMERCIAL'
 
   useEffect(() => {
     if (!isAllowed) return

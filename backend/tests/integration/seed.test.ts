@@ -26,7 +26,7 @@ describe('Provisionnement des comptes initiaux', () => {
     const createdUser = await client()
       .post('/api/admin/users')
       .set(bearer(admin.token))
-      .send({ name: 'Compte créé par ADMIN', email: newEmail, role: 'EMPLOYEE' })
+      .send({ name: 'Compte créé par ADMIN', email: newEmail, role: 'COMMERCIAL' })
     expect(createdUser.status).toBe(201)
     const newUserId = createdUser.body.data.id
     const adminDashboard = await client()

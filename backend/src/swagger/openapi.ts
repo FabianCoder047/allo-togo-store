@@ -178,7 +178,6 @@ export const openapi = {
             enum: [
               "DIRECTOR",
               "ADMIN",
-              "EMPLOYEE",
               "COMMERCIAL",
               "TECHNICIAN",
               "DELIVERY",
@@ -209,7 +208,6 @@ export const openapi = {
             enum: [
               "DIRECTOR",
               "ADMIN",
-              "EMPLOYEE",
               "COMMERCIAL",
               "TECHNICIAN",
               "DELIVERY",
@@ -430,7 +428,7 @@ export const openapi = {
         tags: ["Assistant", "Staff"],
         security: [{ bearerAuth: [] }],
         summary:
-          "Alertes assistant du compte DIRECTOR/EMPLOYEE/COMMERCIAL connecté",
+          "Alertes assistant du compte DIRECTOR/COMMERCIAL connecté",
         responses: {
           "200": { description: "OK" },
           "403": { description: "Rôle non autorisé" },

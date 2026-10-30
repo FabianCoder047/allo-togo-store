@@ -33,7 +33,7 @@ describe('Permissions par rôle', () => {
   })
 
   it('réserve confirmation et affectation au Directeur et à l’agent commercial', () => {
-    for (const role of ['EMPLOYEE', 'TECHNICIAN', 'DELIVERY'] as const) {
+    for (const role of ['TECHNICIAN', 'DELIVERY'] as const) {
       expect(hasPermission(role, 'orders:confirm')).toBe(false)
       expect(hasPermission(role, 'orders:assign')).toBe(false)
     }
@@ -43,26 +43,12 @@ describe('Permissions par rôle', () => {
     expect(hasPermission('ADMIN', 'orders:assign')).toBe(false)
   })
 
-  it('autorise l’employé à confirmer un retrait en agence et à encaisser', () => {
-    expect(hasPermission('EMPLOYEE', 'orders:pickup')).toBe(true)
-    expect(hasPermission('EMPLOYEE', 'payments:record')).toBe(true)
-    expect(hasPermission('EMPLOYEE', 'orders:read')).toBe(true)
-    expect(hasPermission('EMPLOYEE', 'quotes:write')).toBe(true)
-  })
-
-  it('interdit à l’employé la gestion du catalogue, des comptes et des paramètres', () => {
-    expect(hasPermission('EMPLOYEE', 'catalog:write')).toBe(false)
-    expect(hasPermission('EMPLOYEE', 'users:manage')).toBe(false)
-    expect(hasPermission('EMPLOYEE', 'settings:write')).toBe(false)
-  })
-
   it('donne au commercial les droits de confirmation et d’affectation sans gestion des comptes', () => {
     expect(hasPermission('COMMERCIAL', 'orders:confirm')).toBe(true)
     expect(hasPermission('COMMERCIAL', 'orders:assign')).toBe(true)
     expect(hasPermission('COMMERCIAL', 'users:manage')).toBe(false)
     expect(hasPermission('COMMERCIAL', 'catalog:write')).toBe(false)
   })
-
 
   it('limite le livreur à ses propres missions et conversations', () => {
     expect(hasPermission('DELIVERY', 'orders:read:own')).toBe(true)
@@ -85,14 +71,13 @@ describe('Permissions par rôle', () => {
   it('identifie les rôles à périmètre restreint', () => {
     expect(isStaffScopedRole('TECHNICIAN')).toBe(true)
     expect(isStaffScopedRole('DELIVERY')).toBe(true)
-    expect(isStaffScopedRole('EMPLOYEE')).toBe(false)
     expect(isStaffScopedRole('COMMERCIAL')).toBe(false)
     expect(isStaffScopedRole('DIRECTOR')).toBe(false)
     expect(isStaffScopedRole('ADMIN')).toBe(false)
   })
 
   it('expose une liste de permissions sans doublon', () => {
-    for (const role of ['DIRECTOR', 'ADMIN', 'EMPLOYEE', 'COMMERCIAL', 'TECHNICIAN', 'DELIVERY'] as const) {
+    for (const role of ['DIRECTOR', 'ADMIN', 'COMMERCIAL', 'TECHNICIAN', 'DELIVERY'] as const) {
       const permissions = permissionsForRole(role)
       expect(new Set(permissions).size).toBe(permissions.length)
     }

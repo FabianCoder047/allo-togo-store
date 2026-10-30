@@ -51,8 +51,8 @@ describe("Paiement client depuis le suivi de livraison", () => {
       TEST_STAFF.commercial.password,
     )
     employee = await login(
-      TEST_STAFF.employee.email,
-      TEST_STAFF.employee.password,
+      TEST_STAFF.commercial.email,
+      TEST_STAFF.commercial.password,
     )
     delivery = await login(
       TEST_STAFF.delivery.email,

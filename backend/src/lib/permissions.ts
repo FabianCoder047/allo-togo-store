@@ -30,7 +30,7 @@ export type Permission =
  * de l'informaticien : il gère les comptes du personnel et suit
  * l'infrastructure, l'audit et l'affluence sans intervenir sur les commandes,
  * le catalogue ni les encaissements.
- * `COMMERCIAL` est l'agent commercial. `EMPLOYEE` assure l'accueil en agence.
+  * `COMMERCIAL` est l'agent commercial.
  */
 const rolePermissions: Record<StaffRole, Permission[]> = {
   DIRECTOR: [
@@ -58,19 +58,6 @@ const rolePermissions: Record<StaffRole, Permission[]> = {
     'conversations:write',
   ],
   ADMIN: ['users:manage', 'audit:read', 'infrastructure:read', 'technical-logs:read'],
-  EMPLOYEE: [
-    'dashboard:read',
-    'catalog:read',
-    'orders:read',
-    'orders:pickup',
-    'orders:note',
-    'payments:read',
-    'payments:record',
-    'quotes:read',
-    'quotes:write',
-    'conversations:read',
-    'conversations:write',
-  ],
   COMMERCIAL: [
     'dashboard:read',
     'catalog:read',

@@ -9,7 +9,7 @@ export const dashboardQuerySchema = z.object({
 export const userCreateSchema = z.object({
   name: z.string().min(2).max(120),
   email: z.string().email().max(160),
-  role: z.enum(['DIRECTOR', 'ADMIN', 'EMPLOYEE', 'COMMERCIAL', 'TECHNICIAN', 'DELIVERY']),
+  role: z.enum(['DIRECTOR', 'ADMIN', 'COMMERCIAL', 'TECHNICIAN', 'DELIVERY']),
   phone: z.string().max(30).optional().or(z.literal('')).nullable(),
 })
 
@@ -17,7 +17,7 @@ export const userUpdateSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   email: z.string().email().max(160).optional(),
   phone: z.string().max(30).optional().or(z.literal('')).nullable(),
-  role: z.enum(['DIRECTOR', 'ADMIN', 'EMPLOYEE', 'COMMERCIAL', 'TECHNICIAN', 'DELIVERY']).optional(),
+  role: z.enum(['DIRECTOR', 'ADMIN', 'COMMERCIAL', 'TECHNICIAN', 'DELIVERY']).optional(),
   active: z.boolean().optional(),
 })
 

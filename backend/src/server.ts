@@ -38,7 +38,7 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
   const user = socket.data.user as { id: string; role: string; name: string }
   socket.join(`staff:${user.id}`)
-  if (user.role === 'DIRECTOR' || user.role === 'EMPLOYEE' || user.role === 'COMMERCIAL') socket.join('staff:all')
+  if (user.role === 'DIRECTOR' || user.role === 'COMMERCIAL') socket.join('staff:all')
 
   socket.on('join:order', async (orderId: string, ack?: (response: { ok: boolean; error?: string }) => void) => {
     try {
@@ -74,7 +74,7 @@ realtime.on('order:new', (payload: { orderId: string }) => {
 })
 
 // Les questions que l’assistant ne peut pas résoudre sont diffusées aux
-// comptes DIRECTOR, EMPLOYEE et COMMERCIAL connectés (salon staff:all).
+// comptes DIRECTOR et COMMERCIAL connectés (salon staff:all).
 realtime.on(
   'assistant:escalation',
   (payload: {

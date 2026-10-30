@@ -48,7 +48,7 @@ const assistantThreadSelect = {
 }
 
 const ensureAssistantAccess = (role: string) => {
-  if (role !== 'DIRECTOR' && role !== 'EMPLOYEE' && role !== 'COMMERCIAL') {
+  if (role !== 'DIRECTOR' && role !== 'COMMERCIAL') {
     throw forbidden('Les alertes de l’assistant sont réservées aux comptes employés.')
   }
 }

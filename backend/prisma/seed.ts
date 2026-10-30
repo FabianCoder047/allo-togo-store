@@ -380,7 +380,6 @@ const seedItAdmin = async () => {
 const seedStaff = async () => {
   if (process.env.SEED_DEMO_STAFF !== 'true') return
   const accounts = [
-    { name: 'Ama Service Client', email: 'employe@allotogo.test', role: 'EMPLOYEE' as const, password: 'EmployeAlloTogo!2026' },
     { name: 'Esi Agent Commercial', email: 'commercial@allotogo.test', role: 'COMMERCIAL' as const, password: 'CommercialAlloTogo!2026' },
     { name: 'Kossi Technicien', email: 'technicien@allotogo.test', role: 'TECHNICIAN' as const, password: 'TechnicienAlloTogo!2026' },
     { name: 'Akua Livreuse', email: 'livreur@allotogo.test', role: 'DELIVERY' as const, password: 'LivreurAlloTogo!2026' },
