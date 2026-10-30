@@ -68,7 +68,9 @@ export const applyTestEnv = () => {
 
   process.env.WHATSAPP_PROVIDER = 'simulated'
   process.env.WHATSAPP_SIMULATION = 'true'
-  process.env.EMAIL_PROVIDER = 'simulated'
+
+  // Utilisation du fournisseur SMTP réel en test (nécessite MAIL_USERNAME)
+  process.env.EMAIL_PROVIDER = 'smtp'
 
   process.env.BICTORYS_ENABLED = 'true'
   process.env.BICTORYS_MODE = 'test'

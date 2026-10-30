@@ -14,17 +14,7 @@ export interface EmailProvider {
   send(message: EmailMessage): Promise<{ providerMessageId: string }>
 }
 
-export class SimulatedEmailProvider implements EmailProvider {
-  readonly name = 'simulated'
 
-  async send(message: EmailMessage) {
-    // Aucun email réel n'est envoyé dans ce mode. Le message est affiché dans
-    // les logs du serveur pour permettre les tests locaux.
-    // eslint-disable-next-line no-console
-    console.info(`[EMAIL SIMULÉ] → ${message.to} | ${message.subject}\n${message.text}`)
-    return { providerMessageId: `simulated-email-${Date.now()}` }
-  }
-}
 
 export class HttpEmailProvider implements EmailProvider {
   readonly name = 'http'
@@ -91,13 +81,10 @@ export class SmtpEmailProvider implements EmailProvider {
 
 export const emailMode = () => ({
   provider: env.EMAIL_PROVIDER,
-  simulated: env.EMAIL_PROVIDER === 'simulated',
   configured:
-    env.EMAIL_PROVIDER === 'simulated'
-      ? !env.isProduction
-      : env.EMAIL_PROVIDER === 'smtp'
-        ? Boolean(env.MAIL_USERNAME && env.MAIL_PASSWORD && (env.MAIL_FROM || env.MAIL_USERNAME))
-        : Boolean(env.EMAIL_API_URL && env.EMAIL_API_TOKEN),
+    env.EMAIL_PROVIDER === 'smtp'
+      ? Boolean(env.MAIL_USERNAME && env.MAIL_PASSWORD && (env.MAIL_FROM || env.MAIL_USERNAME))
+      : Boolean(env.EMAIL_API_URL && env.EMAIL_API_TOKEN),
 })
 
 const buildEmailProvider = (): EmailProvider => {
@@ -113,12 +100,16 @@ const buildEmailProvider = (): EmailProvider => {
     }
     return new HttpEmailProvider(env.EMAIL_API_URL, env.EMAIL_API_TOKEN, env.EMAIL_FROM)
   }
-  if (env.isProduction && env.EMAIL_PROVIDER !== 'simulated') {
+  if (env.isProduction) {
     throw new Error(
       'Un fournisseur email réel est requis en production : EMAIL_PROVIDER=smtp avec MAIL_* ou EMAIL_PROVIDER=http avec EMAIL_API_URL/EMAIL_API_TOKEN.',
     )
   }
-  return new SimulatedEmailProvider()
+  // Development default: smtp with configured defaults
+  if (!env.MAIL_USERNAME) {
+    throw new Error('MAIL_USERNAME est requis en mode développement.')
+  }
+  return new SmtpEmailProvider(env.MAIL_FROM ?? env.MAIL_USERNAME, env.MAIL_FROM_NAME)
 }
 
 export const sendEmail = async (message: EmailMessage) => {
