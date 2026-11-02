@@ -57,6 +57,17 @@ describe("Provisionnement des comptes initiaux", () => {
       .post(`/api/admin/users/${newUserId}/reset-password`)
       .set(bearer(admin.token))
       .send({ newPassword: "PasswordAdmin!2026" })
+    const pausedUser = await client()
+      .patch(`/api/admin/users/${newUserId}`)
+      .set(bearer(admin.token))
+      .send({ active: false })
+    const inactiveUsers = await client()
+      .get("/api/admin/users?includeInactive=true")
+      .set(bearer(director.token))
+    const reactivatedUser = await client()
+      .patch(`/api/admin/users/${newUserId}`)
+      .set(bearer(admin.token))
+      .send({ active: true })
     const deactivatedUser = await client()
       .delete(`/api/admin/users/${newUserId}`)
       .set(bearer(admin.token))
@@ -76,6 +87,10 @@ describe("Provisionnement des comptes initiaux", () => {
         action: "USER_DEACTIVATED",
       },
     })
+    const retainedUser = await prisma.user.findUnique({
+      where: { id: newUserId },
+      select: { active: true, hiddenAt: true },
+    })
 
     expect(adminUsers.status).toBe(200)
     expect(createdUser.body.data.email).toBe(newEmail)
@@ -83,15 +98,22 @@ describe("Provisionnement des comptes initiaux", () => {
     expect(updatedUser.status).toBe(200)
     expect(updatedUser.body.data.name).toBe("Compte mis à jour par ADMIN")
     expect(resetPassword.status).toBe(200)
+    expect(pausedUser.body.data.active).toBe(false)
+    expect(inactiveUsers.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: newUserId })]),
+    )
+    expect(reactivatedUser.body.data.active).toBe(true)
     expect(deactivatedUser.status).toBe(200)
     expect(deactivatedUser.body.data.active).toBe(false)
     expect(directorUsers.status).toBe(200)
     expect(directorUsers.body.data).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ id: newUserId })]),
     )
-    expect(directorUsersIncludingInactive.body.data).toEqual(
+    expect(directorUsersIncludingInactive.body.data).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ id: newUserId })]),
     )
+    expect(retainedUser?.active).toBe(false)
+    expect(retainedUser?.hiddenAt).toBeInstanceOf(Date)
     expect(deactivatedSession.status).toBe(401)
     expect(deactivationAudit).not.toBeNull()
   })

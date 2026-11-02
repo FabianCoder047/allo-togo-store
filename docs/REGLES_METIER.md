@@ -360,8 +360,8 @@ Règles complémentaires :
 - Le statut en base distingue `PENDING`, `SENT`, `FAILED` ; un échec n'est jamais présenté comme un envoi.
 - Les notifications en échec peuvent être relancées depuis le back-office.
 - Les emails transactionnels (identifiants des comptes du personnel) passent par SMTP
-  (`EMAIL_PROVIDER=smtp`, `MAIL_*`) ou par un fournisseur HTTP. Le mode simulé écrit le message dans
-  les logs et reste interdit en production.
+  (`EMAIL_PROVIDER=smtp`, `MAIL_*`) ou par un fournisseur HTTP (`EMAIL_PROVIDER=http`,
+  `EMAIL_API_URL`, `EMAIL_API_TOKEN`). En production, un fournisseur réel est obligatoire.
 
 ---
 

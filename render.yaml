@@ -60,9 +60,13 @@ services:
       - key: SMS_SIMULATION
         value: "true"
       - key: EMAIL_PROVIDER
-        value: simulated
+        value: http
+      - key: EMAIL_API_URL
+        sync: false
+      - key: EMAIL_API_TOKEN
+        sync: false
       - key: EMAIL_FROM
-        value: Allo Togo Store <no-reply@allotogo.test>
+        sync: false
       - key: BICTORYS_ENABLED
         value: "false"
       - key: BICTORYS_MODE

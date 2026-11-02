@@ -39,11 +39,26 @@ import type {
 } from "../types"
 
 type Tab = "overview" | "orders" | "catalog" | "quotes" | "users" | "infrastructure" | "audit" | "settings"
-type PendingDeletion = { kind: "catalog" , id: string , name: string } | {
-  kind: "staff"
-  id: string
-  name: string
-}
+const adminTabStorageKey = (userId: string) => `allo.admin.activeTab.${userId}`
+
+const isTab = (value: string | null): value is Tab =>
+  value !== null &&
+  [
+    "overview",
+    "orders",
+    "catalog",
+    "quotes",
+    "users",
+    "infrastructure",
+    "audit",
+    "settings",
+  ].includes(value)
+
+type PendingDeletion =
+  | { kind: "catalog" , id: string , name: string }
+  | { kind: "staff" , id: string , name: string }
+  | { kind: "catalog-bulk" , ids: string[] , name: string }
+  | { kind: "staff-bulk" , ids: string[] , name: string }
 
 const tabs: DashboardNavItem[] = [
   {
@@ -133,7 +148,34 @@ function AdminWorkspace({
 }) {
   const { logout, notify } = useStore()
   const [tab, setTab] = useState<Tab>(() =>
-    user.role === "ADMIN" ? "infrastructure" : "overview",
+    (() => {
+      const defaultTab = user.role === "ADMIN" ? "infrastructure" : "overview"
+      const allowedTabs: Tab[] =
+        user.role === "ADMIN"
+          ? ["users", "infrastructure", "audit", "settings"]
+          : user.role === "DIRECTOR"
+            ? [
+                "overview",
+                "orders",
+                "catalog",
+                "quotes",
+                "users",
+                "infrastructure",
+                "audit",
+                "settings",
+              ]
+            : ["overview", "orders", "catalog", "quotes", "settings"]
+      try {
+        const savedTab = window.sessionStorage.getItem(
+          adminTabStorageKey(user.id),
+        )
+        return isTab(savedTab) && allowedTabs.includes(savedTab)
+          ? savedTab
+          : defaultTab
+      } catch {
+        return defaultTab
+      }
+    })(),
   )
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)
   const [dashboardError, setDashboardError] = useState<string | null>(null)
@@ -154,6 +196,9 @@ function AdminWorkspace({
     useState<string | null>(null)
   const contentRef = useRef<HTMLElement | null>(null)
   const [products, setProducts] = useState<Product[]>([])
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(
+    () => new Set(),
+  )
   const [categories, setCategories] = useState<Category[]>([])
   const [productsLoading, setProductsLoading] = useState(false)
   const [productsError, setProductsError] = useState<string | null>(null)
@@ -166,6 +211,9 @@ function AdminWorkspace({
   const [quotesLoading, setQuotesLoading] = useState(false)
   const [quotesError, setQuotesError] = useState<string | null>(null)
   const [users, setUsers] = useState<StaffUser[]>([])
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(
+    () => new Set(),
+  )
   const [usersLoading, setUsersLoading] = useState(false)
   const [usersError, setUsersError] = useState<string | null>(null)
   const [userModal, setUserModal] = useState<StaffUser | null | undefined>(
@@ -174,6 +222,7 @@ function AdminWorkspace({
   const [pendingDeletion, setPendingDeletion] =
     useState<PendingDeletion | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [bulkUpdating, setBulkUpdating] = useState(false)
   const [assistantAlerts, setAssistantAlerts] = useState<AssistantAlert[]>([])
   const [assistantAlertsLoading, setAssistantAlertsLoading] = useState(false)
   const [assistantAlertsError, setAssistantAlertsError] =
@@ -245,7 +294,7 @@ function AdminWorkspace({
     setUsersLoading(true)
     setUsersError(null)
     try {
-      setUsers(await api.admin.users())
+      setUsers(await api.admin.users({ includeInactive: true }))
     } catch (error) {
       setUsersError(errorMessage(error))
     } finally {
@@ -330,14 +379,109 @@ function AdminWorkspace({
   }, [openAssistantThread])
 
   const selectTab = (next: string) => {
-    setTab(next as Tab)
+    if (!isTab(next)) return
+    setTab(next)
     setSelectedOrder(null)
     contentRef.current?.scrollTo({ top: 0, behavior: "smooth" })
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(adminTabStorageKey(user.id), tab)
+    } catch {
+      return
+    }
+  }, [tab, user.id])
+
   const indicators = dashboard?.indicators
   const canManageUsers = user.role === "DIRECTOR" || user.role === "ADMIN"
+  const selectableUsers = users.filter((member) => member.id !== user.id)
+  const catalogProductsForSection = products.filter((product) =>
+    catalogSection === "services"
+      ? product.type === "SERVICE"
+      : product.type !== "SERVICE",
+  )
+  const selectedCatalogProducts = catalogProductsForSection.filter((product) =>
+    selectedProductIds.has(product.id),
+  )
+  const selectedUsers = selectableUsers.filter((member) =>
+    selectedUserIds.has(member.id),
+  )
+
+  const applySelectedUserStatus = async (active: boolean) => {
+    const targets = selectedUsers.filter((member) => member.active !== active)
+    if (targets.length === 0) {
+      notify(
+        active
+          ? "Les comptes sélectionnés sont déjà actifs."
+          : "Les comptes sélectionnés sont déjà inactifs.",
+        "info",
+      )
+      return
+    }
+    setBulkUpdating(true)
+    try {
+      const results = await Promise.allSettled(
+        targets.map((member) => api.admin.updateUser(member.id, { active })),
+      )
+      setSelectedUserIds(new Set())
+      await loadUsers()
+      const failures = results.flatMap((result, index) =>
+        result.status === "rejected"
+          ? [`${targets[index].name} : ${errorMessage(result.reason)}`]
+          : [],
+      )
+      const completed = results.length - failures.length
+      notify(
+        failures.length
+          ? `${completed}/${results.length} compte(s) mis à jour. ${failures.slice(0, 2).join(" · ")}`
+          : `${completed} compte(s) ${active ? "activé(s)" : "désactivé(s)"}.`,
+        failures.length ? "error" : "success",
+      )
+    } finally {
+      setBulkUpdating(false)
+    }
+  }
+
+  const applySelectedCatalogStatus = async (active: boolean) => {
+    const targets = selectedCatalogProducts.filter(
+      (product) => product.active !== active,
+    )
+    if (targets.length === 0) {
+      notify(
+        active
+          ? "Les contenus sélectionnés sont déjà publiés."
+          : "Les contenus sélectionnés sont déjà désactivés.",
+        "info",
+      )
+      return
+    }
+    setBulkUpdating(true)
+    try {
+      const results = await Promise.allSettled(
+        targets.map((product) =>
+          api.admin.catalog.updateProduct(product.id, { active }),
+        ),
+      )
+      setSelectedProductIds(new Set())
+      await loadProducts()
+      const failures = results.flatMap((result, index) =>
+        result.status === "rejected"
+          ? [`${targets[index].name} : ${errorMessage(result.reason)}`]
+          : [],
+      )
+      const completed = results.length - failures.length
+      notify(
+        failures.length
+          ? `${completed}/${results.length} contenu(s) mis à jour. ${failures.slice(0, 2).join(" · ")}`
+          : `${completed} contenu(s) ${active ? "publié(s)" : "désactivé(s)"}.`,
+        failures.length ? "error" : "success",
+      )
+    } finally {
+      setBulkUpdating(false)
+    }
+  }
   // Chaque rôle ne voit que les espaces qui le concernent.
   const visibleTabs = useMemo(() => {
     const allowed: Record<StaffUser["role"], Tab[]> = {
@@ -383,6 +527,64 @@ function AdminWorkspace({
       ),
     [dashboard],
   )
+  const confirmDeletion = async () => {
+    if (!pendingDeletion) return
+    setDeleting(true)
+    const isStaff =
+      pendingDeletion.kind === "staff" ||
+      pendingDeletion.kind === "staff-bulk"
+    const ids =
+      pendingDeletion.kind === "staff-bulk" ||
+      pendingDeletion.kind === "catalog-bulk"
+        ? pendingDeletion.ids
+        : [pendingDeletion.id]
+    const labels = ids.map(
+      (id) =>
+        (isStaff
+          ? users.find((member) => member.id === id)?.name
+          : products.find((product) => product.id === id)?.name) ?? id,
+    )
+    try {
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          isStaff
+            ? api.admin.deleteUser(id)
+            : api.admin.catalog.deleteProduct(id),
+        ),
+      )
+      if (isStaff) {
+        await loadUsers()
+        setSelectedUserIds(new Set())
+      } else {
+        await loadProducts()
+        setSelectedProductIds(new Set())
+      }
+      const failures = results.flatMap((result, index) =>
+        result.status === "rejected"
+          ? [`${labels[index]} : ${errorMessage(result.reason)}`]
+          : [],
+      )
+      const completed = results.length - failures.length
+      if (failures.length) {
+        notify(
+          `${completed}/${results.length} suppression(s) effectuée(s). ${failures.slice(0, 3).join(" · ")}`,
+          "error",
+        )
+      } else if (isStaff) {
+        notify(
+          `${completed} compte(s) masqué(s). Historique conservé.`,
+          "success",
+        )
+      } else {
+        notify(`${completed} contenu(s) supprimé(s).`, "success")
+      }
+      setPendingDeletion(null)
+    } catch (error) {
+      notify(errorMessage(error), "error")
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <main className="admin-page">
@@ -806,6 +1008,46 @@ function AdminWorkspace({
                       </p>
                     </div>
                     <div className="admin-panel-actions">
+                      {selectedCatalogProducts.length > 0 && (
+                        <>
+                          <span className="selection-count">
+                            {selectedCatalogProducts.length} sélectionné(s)
+                          </span>
+                          <button
+                            className="primary small"
+                            disabled={bulkUpdating}
+                            onClick={() =>
+                              void applySelectedCatalogStatus(true)
+                            }
+                          >
+                            Publier
+                          </button>
+                          <button
+                            className="secondary small"
+                            disabled={bulkUpdating}
+                            onClick={() =>
+                              void applySelectedCatalogStatus(false)
+                            }
+                          >
+                            Désactiver
+                          </button>
+                          <button
+                            className="danger small"
+                            disabled={bulkUpdating || deleting}
+                            onClick={() =>
+                              setPendingDeletion({
+                                kind: "catalog-bulk",
+                                ids: selectedCatalogProducts.map(
+                                  (product) => product.id,
+                                ),
+                                name: `${selectedCatalogProducts.length} contenus sélectionnés`,
+                              })
+                            }
+                          >
+                            Supprimer
+                          </button>
+                        </>
+                      )}
                       <button
                         className="secondary small"
                         onClick={() => void loadProducts()}
@@ -830,7 +1072,10 @@ function AdminWorkspace({
                       role="tab"
                       aria-selected={catalogSection === "products"}
                       className={catalogSection === "products" ? "active" : ""}
-                      onClick={() => setCatalogSection("products")}
+                      onClick={() => {
+                        setSelectedProductIds(new Set())
+                        setCatalogSection("products")
+                      }}
                     >
                       Produits
                     </button>
@@ -839,7 +1084,10 @@ function AdminWorkspace({
                       role="tab"
                       aria-selected={catalogSection === "services"}
                       className={catalogSection === "services" ? "active" : ""}
-                      onClick={() => setCatalogSection("services")}
+                      onClick={() => {
+                        setSelectedProductIds(new Set())
+                        setCatalogSection("services")
+                      }}
                     >
                       Services
                     </button>
@@ -850,6 +1098,29 @@ function AdminWorkspace({
                         catalogSection === "services" ? "services" : ""
                       }`}
                     >
+                      <span>
+                        <input
+                          type="checkbox"
+                          aria-label="Sélectionner tous les contenus affichés"
+                          checked={
+                            catalogProductsForSection.length > 0 &&
+                            catalogProductsForSection.every((product) =>
+                              selectedProductIds.has(product.id),
+                            )
+                          }
+                          onChange={(event) => {
+                            const checked = event.currentTarget.checked
+                            setSelectedProductIds((current) => {
+                              const next = new Set(current)
+                              for (const product of catalogProductsForSection) {
+                                if (checked) next.add(product.id)
+                                else next.delete(product.id)
+                              }
+                              return next
+                            })
+                          }}
+                        />
+                      </span>
                       <span>Produit</span>
                       <span>Type</span>
                       <span>Prix</span>
@@ -858,19 +1129,29 @@ function AdminWorkspace({
                       <span>État</span>
                       <span>Actions</span>
                     </div>
-                    {products
-                      .filter((product) =>
-                        catalogSection === "services"
-                          ? product.type === "SERVICE"
-                          : product.type !== "SERVICE",
-                      )
-                      .map((product) => (
+                    {catalogProductsForSection.map((product) => (
                         <div
                           className={`admin-tr catalog ${
                             catalogSection === "services" ? "services" : ""
                           }`}
                           key={product.id}
                         >
+                          <span>
+                            <input
+                              type="checkbox"
+                              aria-label={`Sélectionner ${product.name}`}
+                              checked={selectedProductIds.has(product.id)}
+                              onChange={(event) => {
+                                const checked = event.currentTarget.checked
+                                setSelectedProductIds((current) => {
+                                  const next = new Set(current)
+                                  if (checked) next.add(product.id)
+                                  else next.delete(product.id)
+                                  return next
+                                })
+                              }}
+                            />
+                          </span>
                           <div className="catalog-product-cell">
                             {product.images[0] ? (
                               <img
@@ -1043,9 +1324,46 @@ function AdminWorkspace({
                 <div className="admin-panel-head">
                   <div>
                     <h2>Comptes du personnel</h2>
-                    <p>{users.length} compte(s), y compris inactifs.</p>
+                    <p>
+                      {users.length} compte(s) visibles, y compris les comptes
+                      inactifs.
+                    </p>
                   </div>
                   <div className="admin-panel-actions">
+                    {canManageUsers && selectedUsers.length > 0 && (
+                      <>
+                        <span className="selection-count">
+                          {selectedUsers.length} sélectionné(s)
+                        </span>
+                        <button
+                          className="primary small"
+                          disabled={bulkUpdating}
+                          onClick={() => void applySelectedUserStatus(true)}
+                        >
+                          Activer
+                        </button>
+                        <button
+                          className="secondary small"
+                          disabled={bulkUpdating}
+                          onClick={() => void applySelectedUserStatus(false)}
+                        >
+                          Désactiver
+                        </button>
+                        <button
+                          className="danger small"
+                          disabled={bulkUpdating || deleting}
+                          onClick={() =>
+                            setPendingDeletion({
+                              kind: "staff-bulk",
+                              ids: selectedUsers.map((member) => member.id),
+                              name: `${selectedUsers.length} comptes sélectionnés`,
+                            })
+                          }
+                        >
+                          Supprimer
+                        </button>
+                      </>
+                    )}
                     <button
                       className="secondary small"
                       onClick={() => void loadUsers()}
@@ -1071,6 +1389,31 @@ function AdminWorkspace({
                         !canManageUsers ? "without-actions" : ""
                       }`}
                     >
+                      {canManageUsers && (
+                        <span>
+                          <input
+                            type="checkbox"
+                            aria-label="Sélectionner tous les comptes visibles"
+                            checked={
+                              selectableUsers.length > 0 &&
+                              selectableUsers.every((member) =>
+                                selectedUserIds.has(member.id),
+                              )
+                            }
+                            onChange={(event) => {
+                              const checked = event.currentTarget.checked
+                              setSelectedUserIds((current) => {
+                                const next = new Set(current)
+                                for (const member of selectableUsers) {
+                                  if (checked) next.add(member.id)
+                                  else next.delete(member.id)
+                                }
+                                return next
+                              })
+                            }}
+                          />
+                        </span>
+                      )}
                       <span>Nom</span>
                       <span>Rôle</span>
                       <span>Email</span>
@@ -1084,6 +1427,25 @@ function AdminWorkspace({
                         }`}
                         key={member.id}
                       >
+                        {canManageUsers && (
+                          <span>
+                            <input
+                              type="checkbox"
+                              aria-label={`Sélectionner ${member.name}`}
+                              checked={selectedUserIds.has(member.id)}
+                              disabled={member.id === user.id}
+                              onChange={(event) => {
+                                const checked = event.currentTarget.checked
+                                setSelectedUserIds((current) => {
+                                  const next = new Set(current)
+                                  if (checked) next.add(member.id)
+                                  else next.delete(member.id)
+                                  return next
+                                })
+                              }}
+                            />
+                          </span>
+                        )}
                         <span>
                           <strong>{member.name}</strong>
                           <small>{member.phone || "—"}</small>
@@ -1098,6 +1460,7 @@ function AdminWorkspace({
                         <span>
                           <button
                             className="toggle-pill"
+                            disabled={member.id === user.id}
                             onClick={async () => {
                               try {
                                 await api.admin.updateUser(member.id, {
@@ -1123,7 +1486,7 @@ function AdminWorkspace({
                             </button>
                             <button
                               className="danger compact"
-                              disabled={!member.active}
+                              disabled={member.id === user.id}
                               onClick={() =>
                                 setPendingDeletion({
                                   kind: "staff",
@@ -1232,15 +1595,21 @@ function AdminWorkspace({
             </div>
             <span className="eyebrow">Confirmation</span>
             <h2 id="delete-confirm-title">
-              {pendingDeletion.kind === "staff"
-                ? "Supprimer ce compte ?"
-                : "Supprimer ce contenu ?"}
+              {pendingDeletion.kind === "staff" ||
+              pendingDeletion.kind === "staff-bulk"
+                ? pendingDeletion.kind === "staff-bulk"
+                  ? `Masquer ${pendingDeletion.ids.length} comptes ?`
+                  : "Supprimer ce compte ?"
+                : pendingDeletion.kind === "catalog-bulk"
+                  ? `Supprimer ${pendingDeletion.ids.length} contenus ?`
+                  : "Supprimer ce contenu ?"}
             </h2>
             <p id="delete-confirm-description">
               <strong>« {pendingDeletion.name} »</strong>{" "}
-              {pendingDeletion.kind === "staff"
+              {pendingDeletion.kind === "staff" ||
+              pendingDeletion.kind === "staff-bulk"
                 ? "sera masqué de la gestion du personnel et ne pourra plus se connecter. Son historique sera conservé."
-                : "sera définitivement supprimé du catalogue. Cette action est irréversible."}
+                : "sera définitivement supprimé du catalogue si aucun historique ne le référence. Les contenus liés à des commandes ou mouvements de stock ne pourront pas être supprimés."}
             </p>
             <div className="confirm-dialog-actions">
               <button
@@ -1255,28 +1624,7 @@ function AdminWorkspace({
                 type="button"
                 className="danger"
                 disabled={deleting}
-                onClick={async () => {
-                  setDeleting(true)
-                  try {
-                    if (pendingDeletion.kind === "staff") {
-                      await api.admin.deleteUser(pendingDeletion.id)
-                      await loadUsers()
-                      notify(
-                        "Compte masqué et accès bloqué. Historique conservé.",
-                        "success",
-                      )
-                    } else {
-                      await api.admin.catalog.deleteProduct(pendingDeletion.id)
-                      await loadProducts()
-                      notify("Contenu supprimé.", "success")
-                    }
-                    setPendingDeletion(null)
-                  } catch (error) {
-                    notify(errorMessage(error), "error")
-                  } finally {
-                    setDeleting(false)
-                  }
-                }}
+                onClick={() => void confirmDeletion()}
               >
                 <Icon name="trash" size={16} />
                 {deleting ? "Suppression…" : "Supprimer"}
@@ -1994,6 +2342,7 @@ function CreateUserModal({
   notify: (message: string, tone?: "success" | "error" | "info") => void
 }) {
   const [submitting, setSubmitting] = useState(false)
+  const [submissionError, setSubmissionError] = useState<string | null>(null)
 
   return (
     <div
@@ -2036,6 +2385,7 @@ function CreateUserModal({
           onSubmit={async (event) => {
             event.preventDefault()
             const form = new FormData(event.currentTarget)
+            setSubmissionError(null)
             setSubmitting(true)
             try {
               const payload = {
@@ -2056,6 +2406,7 @@ function CreateUserModal({
               }
               onCreated()
             } catch (error) {
+              setSubmissionError(errorMessage(error))
               notify(errorMessage(error), "error")
             } finally {
               setSubmitting(false)
@@ -2103,6 +2454,16 @@ function CreateUserModal({
               </select>
             </label>
           </div>
+          {submissionError && (
+            <Alert tone="error">
+              {submissionError}
+            </Alert>
+          )}
+          {submitting && !member && (
+            <p className="staff-submit-status" role="status">
+              Compte en création. Envoi de l’email des identifiants en cours…
+            </p>
+          )}
           <div className="staff-modal-actions">
             <button
               type="button"

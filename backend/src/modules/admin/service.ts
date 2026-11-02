@@ -33,6 +33,7 @@ export const listUsers = async (
 ) => {
   return prisma.user.findMany({
     where: {
+      hiddenAt: null,
       ...(options.role ? { role: options.role } : {}),
       ...(options.includeInactive ? {} : { active: true }),
     },
@@ -131,9 +132,9 @@ export const updateUser = async (
 ) => {
   const existing = await prisma.user.findUnique({
     where: { id },
-    select: publicUserSelect,
+    select: { ...publicUserSelect, hiddenAt: true },
   })
-  if (!existing) throw notFound("Compte introuvable.")
+  if (!existing || existing.hiddenAt) throw notFound("Compte introuvable.")
   if (existing.id === actor.id && input.active === false) {
     throw conflict("Vous ne pouvez pas désactiver votre propre compte.")
   }
@@ -190,14 +191,14 @@ export const deactivateUser = async (
     throw conflict("Vous ne pouvez pas supprimer votre propre compte.")
   const existing = await prisma.user.findUnique({
     where: { id },
-    select: publicUserSelect,
+    select: { ...publicUserSelect, hiddenAt: true },
   })
   if (!existing) throw notFound("Compte introuvable.")
-  if (!existing.active) return existing
+  if (existing.hiddenAt) throw notFound("Compte introuvable.")
 
   const user = await prisma.user.update({
     where: { id },
-    data: { active: false },
+    data: { active: false, hiddenAt: new Date() },
     select: publicUserSelect,
   })
   await revokeAllSessions(id)
@@ -222,8 +223,11 @@ export const resetUserPassword = async (
   ip?: string,
   userAgent?: string,
 ) => {
-  const existing = await prisma.user.findUnique({ where: { id } })
-  if (!existing) throw notFound("Compte introuvable.")
+  const existing = await prisma.user.findUnique({
+    where: { id },
+    select: { hiddenAt: true },
+  })
+  if (!existing || existing.hiddenAt) throw notFound("Compte introuvable.")
   await prisma.user.update({
     where: { id },
     data: {

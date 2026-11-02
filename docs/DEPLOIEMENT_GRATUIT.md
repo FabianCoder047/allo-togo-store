@@ -106,7 +106,10 @@ SEED_IT_ADMIN_PASSWORD=...
 SEED_DEMO_STAFF=false
 WHATSAPP_PROVIDER=simulated
 WHATSAPP_SIMULATION=true
-EMAIL_PROVIDER=simulated
+EMAIL_PROVIDER=http
+EMAIL_API_URL=https://api.resend.com/emails
+EMAIL_API_TOKEN=re_...
+EMAIL_FROM=Allo Togo Store <no-reply@votre-domaine.tg>
 BICTORYS_ENABLED=false
 BICTORYS_MOCK=false
 ```
@@ -114,10 +117,10 @@ BICTORYS_MOCK=false
 `JWT_ACCESS_SECRET` et `JWT_REFRESH_SECRET` sont générés par le Blueprint. Ils doivent rester
 secrets et différents l’un de l’autre.
 
-## 7. E-mail réel avec Resend (optionnel)
+## 7. E-mail réel avec Resend
 
-Render Free bloque les ports SMTP classiques. Le backend accepte un fournisseur HTTP compatible
-avec l’API Resend :
+Render Free bloque les ports SMTP classiques. Le Blueprint demande les variables du fournisseur
+HTTP comme secrets à configurer dans Render. Utilisez l’API Resend :
 
 ```text
 EMAIL_PROVIDER=http
@@ -127,8 +130,7 @@ EMAIL_FROM=Allo Togo Store <no-reply@votre-domaine.tg>
 ```
 
 Sans domaine vérifié, Resend accepte le mode test avec `onboarding@resend.dev`, mais l’envoi est
-limité. Tant que l’e-mail reste en mode `simulated`, la création d’un membre du personnel échoue à
-l’envoi des identifiants : configurer Resend avant d’utiliser cette fonction.
+limité. Configurez ces trois variables dans Render avant de créer des comptes du personnel.
 
 ## 8. Limites à connaître
 

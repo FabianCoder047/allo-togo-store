@@ -26,6 +26,7 @@ export class HttpEmailProvider implements EmailProvider {
   async send(message: EmailMessage) {
     const response = await fetch(this.apiUrl, {
       method: "POST",
+      signal: AbortSignal.timeout(15_000),
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${this.token}`,
@@ -68,6 +69,9 @@ export class SmtpEmailProvider implements EmailProvider {
         port: env.MAIL_PORT,
         secure: env.MAIL_PORT === 465,
         auth: { user: env.MAIL_USERNAME, pass: env.MAIL_PASSWORD },
+        connectionTimeout: 10_000,
+        greetingTimeout: 10_000,
+        socketTimeout: 15_000,
       })
   }
 

@@ -536,7 +536,7 @@ La référence complète et les schémas sont dans **Swagger** : `http://localho
 | `TRACKING_LOOKUP_MAX_ATTEMPTS` | `10` | Seuil de tentatives |
 | `WHATSAPP_PROVIDER` | `simulated` | `simulated` ou `http` |
 | `WHATSAPP_SIMULATION` | `true` | Marque la simulation |
-| `EMAIL_PROVIDER` | `smtp` | `simulated` (logs), `smtp` (Gmail/port 465) ou `http` (envoi réel) |
+| `EMAIL_PROVIDER` | `smtp` | `smtp` (Gmail/port 465) ou `http` (envoi réel) |
 | `EMAIL_FROM` | `Allo Togo Store <no-reply@allotogo.test>` | Expéditeur des emails HTTP |
 | `EMAIL_API_URL` | — | Endpoint POST JSON du fournisseur email |
 | `EMAIL_API_TOKEN` | — | Jeton Bearer du fournisseur email |
