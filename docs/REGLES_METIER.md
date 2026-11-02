@@ -360,8 +360,10 @@ Règles complémentaires :
 - Le statut en base distingue `PENDING`, `SENT`, `FAILED` ; un échec n'est jamais présenté comme un envoi.
 - Les notifications en échec peuvent être relancées depuis le back-office.
 - Les emails transactionnels (identifiants des comptes du personnel) passent par SMTP
-  (`EMAIL_PROVIDER=smtp`, `MAIL_*`) ou par un fournisseur HTTP (`EMAIL_PROVIDER=http`,
-  `EMAIL_API_URL`, `EMAIL_API_TOKEN`). En production, un fournisseur réel est obligatoire.
+  (`EMAIL_PROVIDER=smtp`, `MAIL_*`), un fournisseur HTTP générique (`EMAIL_PROVIDER=http`,
+  `EMAIL_API_URL`, `EMAIL_API_TOKEN`) ou l’API Gmail OAuth (`EMAIL_PROVIDER=google`, `GMAIL_CLIENT_ID`,
+  `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`, `MAIL_USERNAME`). En production, un fournisseur
+  réel est obligatoire.
 
 ---
 

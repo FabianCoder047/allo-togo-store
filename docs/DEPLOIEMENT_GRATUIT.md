@@ -10,7 +10,7 @@ Socket.IO. Il ne remplace pas une infrastructure de production payante.
 | Application complète | **Render Free Web Service (Docker)** | Sert le SPA Vite, l’API Express et Socket.IO sur une seule origine |
 | Base PostgreSQL | **Neon Free** | Données Prisma, migrations et sauvegardes ponctuelles |
 | Code source | **GitHub** | Déclenche les déploiements Render |
-| E-mail transactionnel (optionnel) | **Resend Free** | Remplacement du mode e-mail simulé, compatible HTTP |
+| E-mail transactionnel | **API Gmail** | Envoi HTTPS OAuth, sans port SMTP |
 
 Le frontend et l’API partagent la même origine. C’est volontaire : les cookies de rafraîchissement
 sont `SameSite=Lax`, et Socket.IO se connecte sans configuration d’URL supplémentaire. Un frontend
@@ -106,10 +106,12 @@ SEED_IT_ADMIN_PASSWORD=...
 SEED_DEMO_STAFF=false
 WHATSAPP_PROVIDER=simulated
 WHATSAPP_SIMULATION=true
-EMAIL_PROVIDER=http
-EMAIL_API_URL=https://api.resend.com/emails
-EMAIL_API_TOKEN=re_...
-EMAIL_FROM=Allo Togo Store <no-reply@votre-domaine.tg>
+EMAIL_PROVIDER=google
+GMAIL_CLIENT_ID=<identifiant-client-oauth>
+GMAIL_CLIENT_SECRET=<secret-client-oauth>
+GMAIL_REFRESH_TOKEN=<jeton-de-rafraichissement>
+MAIL_USERNAME=votre-adresse@gmail.com
+MAIL_FROM_NAME=Allo-Togo Shop
 BICTORYS_ENABLED=false
 BICTORYS_MOCK=false
 ```
@@ -117,20 +119,44 @@ BICTORYS_MOCK=false
 `JWT_ACCESS_SECRET` et `JWT_REFRESH_SECRET` sont générés par le Blueprint. Ils doivent rester
 secrets et différents l’un de l’autre.
 
-## 7. E-mail réel avec Resend
+## 7. E-mail via l’API Gmail (OAuth)
 
-Render Free bloque les ports SMTP classiques. Le Blueprint demande les variables du fournisseur
-HTTP comme secrets à configurer dans Render. Utilisez l’API Resend :
+Cette méthode envoie les emails depuis un compte Gmail par HTTPS. Elle ne requiert ni abonnement
+email ni port SMTP, mais le mot de passe d’application Gmail ne suffit pas : il faut créer un client
+OAuth et un jeton de rafraîchissement.
+
+1. Dans [Google Cloud Console](https://console.cloud.google.com/), crée un projet et active
+   **Gmail API**.
+2. Configure l’écran de consentement OAuth et ajoute ton compte Gmail comme utilisateur de test.
+   Crée un identifiant OAuth de type **Application Web** et ajoute
+   `https://developers.google.com/oauthplayground` comme URI de redirection autorisée ; conserve son
+   ID et son secret.
+3. Dans [OAuth 2.0 Playground](https://developers.google.com/oauthplayground/), ouvre les paramètres
+   (roue dentée), coche **Use your own OAuth credentials**, puis saisis l’ID et le secret du client.
+   Sélectionne le scope `https://www.googleapis.com/auth/gmail.send`, autorise l’accès avec le compte
+   qui enverra les emails, échange le code, puis copie le **Refresh token**. Ne partage ni le secret
+   client ni ce jeton.
 
 ```text
-EMAIL_PROVIDER=http
-EMAIL_API_URL=https://api.resend.com/emails
-EMAIL_API_TOKEN=re_...
-EMAIL_FROM=Allo Togo Store <no-reply@votre-domaine.tg>
+EMAIL_PROVIDER=google
+GMAIL_CLIENT_ID=<identifiant-client-oauth>
+GMAIL_CLIENT_SECRET=<secret-client-oauth>
+GMAIL_REFRESH_TOKEN=<jeton-de-rafraichissement>
+MAIL_USERNAME=votre-adresse@gmail.com
+MAIL_FROM_NAME=Allo-Togo Shop
 ```
 
-Sans domaine vérifié, Resend accepte le mode test avec `onboarding@resend.dev`, mais l’envoi est
-limité. Configurez ces trois variables dans Render avant de créer des comptes du personnel.
+Dans **Render → service → Environment**, renseigne `EMAIL_PROVIDER`, `GMAIL_CLIENT_ID`,
+`GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`, `MAIL_USERNAME` et `MAIL_FROM_NAME`.
+`MAIL_USERNAME` doit être le compte Google qui a accordé l’autorisation. Le fichier `.env` local
+n’est pas chargé par Render ; ne publie jamais le secret client ni le refresh token dans Git.
+Redéploie ensuite le service.
+
+Important : un client OAuth externe laissé en mode **Testing** peut voir son refresh token expirer
+après 7 jours. Pour un fonctionnement durable, vérifie les exigences de publication et de
+vérification de l’écran de consentement Google avant de considérer la configuration terminée.
+Une fois déployé, vérifie l’état email dans l’API d’administration puis envoie un essai à une adresse
+que tu contrôles.
 
 ## 8. Limites à connaître
 

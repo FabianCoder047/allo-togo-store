@@ -536,8 +536,11 @@ La référence complète et les schémas sont dans **Swagger** : `http://localho
 | `TRACKING_LOOKUP_MAX_ATTEMPTS` | `10` | Seuil de tentatives |
 | `WHATSAPP_PROVIDER` | `simulated` | `simulated` ou `http` |
 | `WHATSAPP_SIMULATION` | `true` | Marque la simulation |
-| `EMAIL_PROVIDER` | `smtp` | `smtp` (Gmail/port 465) ou `http` (envoi réel) |
+| `EMAIL_PROVIDER` | `smtp` | `smtp`, `http` ou `google` (API Gmail OAuth) |
 | `EMAIL_FROM` | `Allo Togo Store <no-reply@allotogo.test>` | Expéditeur des emails HTTP |
+| `GMAIL_CLIENT_ID` | — | ID du client OAuth Google |
+| `GMAIL_CLIENT_SECRET` | — | Secret du client OAuth Google |
+| `GMAIL_REFRESH_TOKEN` | — | Jeton de rafraîchissement Gmail API |
 | `EMAIL_API_URL` | — | Endpoint POST JSON du fournisseur email |
 | `EMAIL_API_TOKEN` | — | Jeton Bearer du fournisseur email |
 | `MAIL_HOST` | `smtp.gmail.com` | Serveur SMTP |
@@ -573,8 +576,8 @@ Le détail figure dans `backend/.env.example`.
 ## 12. Déploiement
 
 - **API** : image Node 22, `prisma migrate deploy` au démarrage, variables d'environnement injectées.
-- **Email** : `EMAIL_PROVIDER=smtp` avec `MAIL_HOST` / `MAIL_PORT` / `MAIL_USERNAME` / `MAIL_PASSWORD`,
-  ou `EMAIL_PROVIDER=http` avec `EMAIL_API_URL` / `EMAIL_API_TOKEN` ; le mode simulé est refusé en production.
+- **Email** : SMTP avec `MAIL_*`, API Gmail OAuth avec les variables `GMAIL_*` et `MAIL_USERNAME`,
+  ou fournisseur HTTP générique ; un fournisseur réel est obligatoire en production.
 - **Base** : PostgreSQL managé ou conteneur avec volume persistant et sauvegardes.
 - **Frontend** : `pnpm build`, fichiers statiques servis par un CDN ou le reverse proxy.
 - **Reverse proxy** : terminaison TLS, `/api` et `/socket.io` vers l'API, en-têtes de sécurité.

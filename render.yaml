@@ -60,13 +60,17 @@ services:
       - key: SMS_SIMULATION
         value: "true"
       - key: EMAIL_PROVIDER
-        value: http
-      - key: EMAIL_API_URL
+        value: google
+      - key: GMAIL_CLIENT_ID
         sync: false
-      - key: EMAIL_API_TOKEN
+      - key: GMAIL_CLIENT_SECRET
         sync: false
-      - key: EMAIL_FROM
+      - key: GMAIL_REFRESH_TOKEN
         sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: Allo-Togo Shop
       - key: BICTORYS_ENABLED
         value: "false"
       - key: BICTORYS_MODE

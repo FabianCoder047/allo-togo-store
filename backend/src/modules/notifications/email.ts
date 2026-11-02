@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import type { StaffRole } from "@prisma/client"
 import nodemailer, { type Transporter } from "nodemailer"
 import { env } from "../../config/env.js"
@@ -12,6 +13,115 @@ export type EmailMessage = {
 export interface EmailProvider {
   readonly name: string
   send(message: EmailMessage): Promise<{ providerMessageId: string }>
+}
+
+const encodeMimeHeader = (value: string) =>
+  `=?UTF-8?B?${Buffer.from(value, "utf8").toString("base64")}?=`
+
+const encodeMimeBody = (value: string) =>
+  Buffer.from(value, "utf8")
+    .toString("base64")
+    .match(/.{1,76}/g)
+    ?.join("\r\n") ?? ""
+
+export class GmailApiEmailProvider implements EmailProvider {
+  readonly name = "google"
+
+  constructor(
+    private readonly clientId: string,
+    private readonly clientSecret: string,
+    private readonly refreshToken: string,
+    private readonly senderEmail: string,
+    private readonly senderName: string,
+  ) {}
+
+  private async getAccessToken() {
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      signal: AbortSignal.timeout(15_000),
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        refresh_token: this.refreshToken,
+        grant_type: "refresh_token",
+      }),
+    })
+    if (!response.ok) {
+      const details = await response.text()
+      throw new Error(
+        `Google OAuth a répondu ${response.status}${details ? ` : ${details.slice(0, 500)}` : ""}`,
+      )
+    }
+
+    const body = (await response.json()) as { access_token?: string }
+    if (!body.access_token) {
+      throw new Error("Google OAuth n’a pas retourné de jeton d’accès.")
+    }
+    return body.access_token
+  }
+
+  async send(message: EmailMessage) {
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.senderEmail) ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(message.to)
+    ) {
+      throw new Error("L’adresse expéditrice ou destinataire est invalide.")
+    }
+    if (/[\r\n]/.test(message.subject) || /[\r\n]/.test(this.senderName)) {
+      throw new Error("Le nom de l’expéditeur ou l’objet contient un saut de ligne.")
+    }
+
+    const boundary = `allo-togo-${randomUUID()}`
+    const parts = [
+      `From: ${encodeMimeHeader(this.senderName)} <${this.senderEmail}>`,
+      `To: ${message.to}`,
+      `Subject: ${encodeMimeHeader(message.subject)}`,
+      "MIME-Version: 1.0",
+      `Content-Type: multipart/alternative; boundary="${boundary}"`,
+      "",
+      `--${boundary}`,
+      "Content-Type: text/plain; charset=UTF-8",
+      "Content-Transfer-Encoding: base64",
+      "",
+      encodeMimeBody(message.text),
+    ]
+    if (message.html) {
+      parts.push(
+        `--${boundary}`,
+        "Content-Type: text/html; charset=UTF-8",
+        "Content-Transfer-Encoding: base64",
+        "",
+        encodeMimeBody(message.html),
+      )
+    }
+    parts.push(`--${boundary}--`, "")
+
+    const response = await fetch(
+      "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+      {
+        method: "POST",
+        signal: AbortSignal.timeout(15_000),
+        headers: {
+          authorization: `Bearer ${await this.getAccessToken()}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          raw: Buffer.from(parts.join("\r\n"), "utf8").toString("base64url"),
+        }),
+      },
+    )
+    if (!response.ok) {
+      const details = await response.text()
+      throw new Error(
+        `Gmail API a répondu ${response.status}${details ? ` : ${details.slice(0, 500)}` : ""}`,
+      )
+    }
+    const body = (await response.json().catch(() => ({}))) as { id?: string }
+    return {
+      providerMessageId: body.id ?? `gmail-api-${Date.now()}`,
+    }
+  }
 }
 
 export class HttpEmailProvider implements EmailProvider {
@@ -96,7 +206,14 @@ export const emailMode = () => ({
             env.MAIL_PASSWORD &&
             (env.MAIL_FROM || env.MAIL_USERNAME),
         )
-      : Boolean(env.EMAIL_API_URL && env.EMAIL_API_TOKEN),
+      : env.EMAIL_PROVIDER === "google"
+        ? Boolean(
+            env.GMAIL_CLIENT_ID &&
+              env.GMAIL_CLIENT_SECRET &&
+              env.GMAIL_REFRESH_TOKEN &&
+              env.MAIL_USERNAME,
+          )
+        : Boolean(env.EMAIL_API_URL && env.EMAIL_API_TOKEN),
 })
 
 const buildEmailProvider = (): EmailProvider => {
@@ -123,9 +240,28 @@ const buildEmailProvider = (): EmailProvider => {
       env.EMAIL_FROM,
     )
   }
+  if (env.EMAIL_PROVIDER === "google") {
+    if (
+      !env.GMAIL_CLIENT_ID ||
+      !env.GMAIL_CLIENT_SECRET ||
+      !env.GMAIL_REFRESH_TOKEN ||
+      !env.MAIL_USERNAME
+    ) {
+      throw new Error(
+        "GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN et MAIL_USERNAME sont requis lorsque EMAIL_PROVIDER=google.",
+      )
+    }
+    return new GmailApiEmailProvider(
+      env.GMAIL_CLIENT_ID,
+      env.GMAIL_CLIENT_SECRET,
+      env.GMAIL_REFRESH_TOKEN,
+      env.MAIL_USERNAME,
+      env.MAIL_FROM_NAME,
+    )
+  }
   if (env.isProduction) {
     throw new Error(
-      "Un fournisseur email réel est requis en production : EMAIL_PROVIDER=smtp avec MAIL_* ou EMAIL_PROVIDER=http avec EMAIL_API_URL/EMAIL_API_TOKEN.",
+      "Un fournisseur email réel est requis en production : SMTP, HTTP avec EMAIL_API_URL/EMAIL_API_TOKEN ou Gmail API OAuth avec GMAIL_*.",
     )
   }
   // Development default: smtp with configured defaults
