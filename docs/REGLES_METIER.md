@@ -336,6 +336,8 @@ Règles complémentaires :
   prénom, nom, téléphone et mot de passe. Le Directeur et l’informaticien peuvent aussi gérer
   l'email professionnel des comptes depuis l'onglet **Personnel**.
 - Un changement de mot de passe révoque toutes les sessions et impose une reconnexion.
+- Le mot de passe provisoire envoyé à la création ou après une réinitialisation expire après 15 minutes.
+  S'il expire avant son changement, le membre doit demander à un administrateur de le réinitialiser.
 - Un technicien ne peut pas accéder à une commande non affectée (réponse `403`).
 - Les actions sensibles sont journalisées (`AuditLog`).
 - Les notes internes sont réservées au Directeur, à l'agent commercial et aux employés.

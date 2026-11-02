@@ -5,12 +5,17 @@ type InstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" , platform: string }>
 }
 
+const INSTALL_NOTICE_SEEN_KEY = "allo.pwa.installNoticeSeen"
+
 export function PwaControls() {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(
     null,
   )
   const [installError, setInstallError] = useState<string | null>(null)
   const [dismissed, setDismissed] = useState(false)
+  const [canShowInstallNotice] = useState(
+    () => window.sessionStorage.getItem(INSTALL_NOTICE_SEEN_KEY) !== "true",
+  )
   const [isIos, setIsIos] = useState(false)
   const [needRefresh, setNeedRefresh] = useState(false)
   const [registration, setRegistration] =
@@ -78,9 +83,15 @@ export function PwaControls() {
         (window.navigator.platform === "MacIntel" &&
           window.navigator.maxTouchPoints > 1))
     setIsIos(ios)
+    if (ios && canShowInstallNotice) {
+      window.sessionStorage.setItem(INSTALL_NOTICE_SEEN_KEY, "true")
+    }
 
     const handleInstallPrompt = (event: Event) => {
       event.preventDefault()
+      if (canShowInstallNotice) {
+        window.sessionStorage.setItem(INSTALL_NOTICE_SEEN_KEY, "true")
+      }
       setInstallPrompt(event as InstallPromptEvent)
     }
     const handleInstalled = () => {
@@ -94,11 +105,11 @@ export function PwaControls() {
       window.removeEventListener("beforeinstallprompt", handleInstallPrompt)
       window.removeEventListener("appinstalled", handleInstalled)
     }
-  }, [])
+  }, [canShowInstallNotice])
 
   if (
     !import.meta.env.PROD ||
-    (!needRefresh && !installPrompt && !isIos) ||
+    (!needRefresh && (!canShowInstallNotice || (!installPrompt && !isIos))) ||
     dismissed
   ) {
     return null

@@ -112,6 +112,15 @@ export const login = async (
 
   const valid = await bcrypt.compare(password, user.passwordHash)
   if (!valid) throw genericError
+  if (
+    user.mustChangePassword &&
+    user.passwordExpiresAt &&
+    user.passwordExpiresAt.getTime() <= Date.now()
+  ) {
+    throw unauthorized(
+      "Le code provisoire a expiré. Contactez un administrateur pour en recevoir un nouveau.",
+    )
+  }
 
   await prisma.user.update({
     where: { id: user.id },
@@ -139,7 +148,10 @@ export const refresh = async (
     !session ||
     session.revokedAt ||
     session.expiresAt.getTime() < Date.now() ||
-    !session.user.active
+    !session.user.active ||
+    (session.user.mustChangePassword &&
+      session.user.passwordExpiresAt !== null &&
+      session.user.passwordExpiresAt.getTime() <= Date.now())
   ) {
     throw unauthorized("Session expirée. Veuillez vous reconnecter.")
   }
@@ -180,10 +192,23 @@ export const changePassword = async (
   if (!user) throw unauthorized()
   const valid = await bcrypt.compare(currentPassword, user.passwordHash)
   if (!valid) throw badRequest("Le mot de passe actuel est incorrect.")
+  if (
+    user.mustChangePassword &&
+    user.passwordExpiresAt &&
+    user.passwordExpiresAt.getTime() <= Date.now()
+  ) {
+    throw unauthorized(
+      "Le code provisoire a expiré. Contactez un administrateur pour en recevoir un nouveau.",
+    )
+  }
   const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS)
   await prisma.user.update({
     where: { id: userId },
-    data: { passwordHash, mustChangePassword: false },
+    data: {
+      passwordHash,
+      mustChangePassword: false,
+      passwordExpiresAt: null,
+    },
   })
   await revokeAllSessions(userId)
 }

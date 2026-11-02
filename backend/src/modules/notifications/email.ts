@@ -315,6 +315,7 @@ export const sendStaffCredentialsEmail = async (input: {
     `Adresse de connexion : ${loginUrl}`,
     `Email : ${input.email}`,
     `Mot de passe provisoire : ${input.temporaryPassword}`,
+    "Ce mot de passe provisoire expire dans 15 minutes. Connectez-vous et changez-le avant son expiration.",
     "Ce mot de passe est temporaire. Vous devrez le changer dès votre première connexion.",
     "Si vous n’êtes pas à l’origine de cette demande, contactez la direction Allo Togo.",
   ].join("\n\n")
@@ -327,6 +328,7 @@ export const sendStaffCredentialsEmail = async (input: {
       <li><strong>Email :</strong> ${escapeHtml(input.email)}</li>
       <li><strong>Mot de passe provisoire :</strong> <code>${escapeHtml(input.temporaryPassword)}</code></li>
     </ul>
+    <p>Ce mot de passe provisoire expire dans 15 minutes. Connectez-vous et changez-le avant son expiration.</p>
     <p>Ce mot de passe est temporaire. Vous devrez le changer dès votre première connexion.</p>
     <p>Si vous n’êtes pas à l’origine de cette demande, contactez la direction Allo Togo.</p>
   `.trim()

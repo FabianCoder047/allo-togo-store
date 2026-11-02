@@ -353,7 +353,7 @@ Toutes les transitions sont contrôlées côté serveur avec mise à jour condit
 
 Lorsqu’un Directeur ou un informaticien autorisé crée un membre (`POST /api/admin/users`), il ne
 fournit pas de mot de passe : l’API génère un mot de passe provisoire de 6 caractères, crée le compte avec
-`mustChangePassword=true`, envoie les identifiants par email, puis journalise l’action. Si l’email
+`mustChangePassword=true`, valable 15 minutes, envoie les identifiants par email, puis journalise l’action. Si l’email
 échoue, le compte est supprimé pour éviter un compte inaccessible. Le frontend bloque l’accès au
 back-office et à l’espace intervenant tant que le mot de passe n’a pas été changé. Côté API, les
 routes métier protégées par une permission répondent `403` tant que le jeton porte

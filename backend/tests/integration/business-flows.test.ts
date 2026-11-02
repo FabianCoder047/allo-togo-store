@@ -851,6 +851,14 @@ describe("Scénario G — autorisations", () => {
       .set(bearer(admin.token))
       .send({ newPassword: "TechDeux!2026" })
     expect(reset.status).toBe(200)
+    const resetUser = await prisma.user.findUniqueOrThrow({
+      where: { id: created.body.data.id },
+      select: { passwordExpiresAt: true },
+    })
+    expect(resetUser.passwordExpiresAt?.getTime()).toBeGreaterThan(Date.now())
+    expect(resetUser.passwordExpiresAt?.getTime()).toBeLessThanOrEqual(
+      Date.now() + 15 * 60 * 1000,
+    )
 
     const temporarySession = await login(email, "TechDeux!2026")
     expect(temporarySession.user.mustChangePassword).toBe(true)
@@ -863,9 +871,26 @@ describe("Scénario G — autorisations", () => {
     expect(blocked.status).toBe(403)
     expect(blocked.body.error.code).toBe("FORBIDDEN")
 
+    await prisma.user.update({
+      where: { id: created.body.data.id },
+      data: { passwordExpiresAt: new Date(Date.now() - 1) },
+    })
+    const expiredLogin = await client().post("/api/auth/login").send({
+      email,
+      password: "TechDeux!2026",
+    })
+    expect(expiredLogin.status).toBe(401)
+    expect(expiredLogin.body.error.message).toContain("code provisoire a expiré")
+
+    await client()
+      .post(`/api/admin/users/${created.body.data.id}/reset-password`)
+      .set(bearer(admin.token))
+      .send({ newPassword: "TechDeux!2026" })
+    const renewedTemporarySession = await login(email, "TechDeux!2026")
+
     const changed = await client()
       .post("/api/auth/change-password")
-      .set(bearer(temporarySession.token))
+      .set(bearer(renewedTemporarySession.token))
       .send({
         currentPassword: "TechDeux!2026",
         newPassword: "TechDeuxNew!2026",

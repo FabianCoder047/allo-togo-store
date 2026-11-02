@@ -14,6 +14,8 @@ import type {
   userUpdateSchema,
 } from "./schemas.js"
 
+const TEMPORARY_PASSWORD_TTL_MS = 15 * 60 * 1000
+
 const publicUserSelect = {
   id: true,
   name: true,
@@ -75,6 +77,7 @@ export const createUser = async (
       email,
       passwordHash: await hashPassword(temporaryPassword),
       mustChangePassword: true,
+      passwordExpiresAt: new Date(Date.now() + TEMPORARY_PASSWORD_TTL_MS),
       role: input.role,
       phone: input.phone?.trim() || null,
     },
@@ -233,6 +236,7 @@ export const resetUserPassword = async (
     data: {
       passwordHash: await hashPassword(input.newPassword),
       mustChangePassword: true,
+      passwordExpiresAt: new Date(Date.now() + TEMPORARY_PASSWORD_TTL_MS),
     },
   })
   await revokeAllSessions(id)
