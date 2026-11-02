@@ -99,6 +99,7 @@ const productShape = z.object({
   price: z.number().int().min(0),
   previousPrice: z.number().int().positive().optional().nullable(),
   cartonPrice: z.number().int().positive().optional().nullable(),
+  cartonQuantity: z.number().int().positive().max(100_000).optional().nullable(),
   wholesalePrices: wholesalePricesSchema.optional().nullable(),
   quoteOnly: z.boolean().default(false),
   specs: z
@@ -141,6 +142,15 @@ export const productInputSchema = productShape.superRefine((product, ctx) => {
       code: z.ZodIssueCode.custom,
       path: ["wholesalePrices"],
       message: "Les prix de gros doivent être inférieurs au prix actuel.",
+    })
+  }
+  if (
+    (product.cartonPrice == null) !== (product.cartonQuantity == null)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["cartonPrice"],
+      message: "Le prix et le nombre de bouteilles du carton sont indissociables.",
     })
   }
   if (

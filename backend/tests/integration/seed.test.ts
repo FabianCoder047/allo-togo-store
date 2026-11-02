@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto"
 import bcrypt from "bcryptjs"
 import { describe, expect, it } from "vitest"
 import { prisma } from "../../src/db/prisma.js"
+import { signAccessToken } from "../../src/modules/auth/service.js"
 import { bearer, client, login } from "../helpers/api.js"
 import { TEST_ADMIN, TEST_IT } from "../helpers/testEnv.js"
 
@@ -38,6 +39,13 @@ describe("Provisionnement des comptes initiaux", () => {
       })
     expect(createdUser.status).toBe(201)
     const newUserId = createdUser.body.data.id
+    const userToken = signAccessToken({
+      id: newUserId,
+      name: createdUser.body.data.name,
+      email: createdUser.body.data.email,
+      role: createdUser.body.data.role,
+      mustChangePassword: createdUser.body.data.mustChangePassword,
+    })
     const adminDashboard = await client()
       .get("/api/admin/dashboard")
       .set(bearer(admin.token))
@@ -55,6 +63,19 @@ describe("Provisionnement des comptes initiaux", () => {
     const directorUsers = await client()
       .get("/api/admin/users")
       .set(bearer(director.token))
+    const directorUsersIncludingInactive = await client()
+      .get("/api/admin/users?includeInactive=true")
+      .set(bearer(director.token))
+    const deactivatedSession = await client()
+      .get("/api/auth/me")
+      .set(bearer(userToken))
+    const deactivationAudit = await prisma.auditLog.findFirst({
+      where: {
+        entity: "User",
+        entityId: newUserId,
+        action: "USER_DEACTIVATED",
+      },
+    })
 
     expect(adminUsers.status).toBe(200)
     expect(createdUser.body.data.email).toBe(newEmail)
@@ -65,5 +86,13 @@ describe("Provisionnement des comptes initiaux", () => {
     expect(deactivatedUser.status).toBe(200)
     expect(deactivatedUser.body.data.active).toBe(false)
     expect(directorUsers.status).toBe(200)
+    expect(directorUsers.body.data).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: newUserId })]),
+    )
+    expect(directorUsersIncludingInactive.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: newUserId })]),
+    )
+    expect(deactivatedSession.status).toBe(401)
+    expect(deactivationAudit).not.toBeNull()
   })
 })

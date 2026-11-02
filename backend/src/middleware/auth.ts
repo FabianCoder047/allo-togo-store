@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express"
 import { forbidden, unauthorized } from "../lib/errors.js"
 import { hasPermission, type Permission } from "../lib/permissions.js"
 import { verifyAccessToken } from "../modules/auth/service.js"
+import { prisma } from "../db/prisma.js"
 
 const extractBearer = (req: Request) => {
   const header = req.headers.authorization
@@ -9,7 +10,7 @@ const extractBearer = (req: Request) => {
   return header.slice("Bearer ".length).trim()
 }
 
-export const requireAuth = (
+export const requireAuth = async (
   req: Request,
   _res: Response,
   next: NextFunction,
@@ -17,7 +18,13 @@ export const requireAuth = (
   const token = extractBearer(req)
   if (!token) return next(unauthorized())
   try {
-    req.user = verifyAccessToken(token)
+    const user = verifyAccessToken(token)
+    const account = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { active: true },
+    })
+    if (!account?.active) return next(unauthorized())
+    req.user = user
     return next()
   } catch (error) {
     return next(error)

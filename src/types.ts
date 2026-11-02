@@ -44,6 +44,7 @@ export interface Product {
   price: number
   previousPrice: number | null
   cartonPrice: number | null
+  cartonQuantity: number | null
   wholesalePrices: WholesalePrice[] | null
   quoteOnly: boolean
   specs: ProductSpecs | null

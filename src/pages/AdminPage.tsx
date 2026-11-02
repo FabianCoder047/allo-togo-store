@@ -245,7 +245,7 @@ function AdminWorkspace({
     setUsersLoading(true)
     setUsersError(null)
     try {
-      setUsers(await api.admin.users({ includeInactive: true }))
+      setUsers(await api.admin.users())
     } catch (error) {
       setUsersError(errorMessage(error))
     } finally {
@@ -1239,7 +1239,7 @@ function AdminWorkspace({
             <p id="delete-confirm-description">
               <strong>« {pendingDeletion.name} »</strong>{" "}
               {pendingDeletion.kind === "staff"
-                ? "sera désactivé et ne pourra plus se connecter. Son historique sera conservé."
+                ? "sera masqué de la gestion du personnel et ne pourra plus se connecter. Son historique sera conservé."
                 : "sera définitivement supprimé du catalogue. Cette action est irréversible."}
             </p>
             <div className="confirm-dialog-actions">
@@ -1261,7 +1261,10 @@ function AdminWorkspace({
                     if (pendingDeletion.kind === "staff") {
                       await api.admin.deleteUser(pendingDeletion.id)
                       await loadUsers()
-                      notify("Compte supprimé et désactivé.", "success")
+                      notify(
+                        "Compte masqué et accès bloqué. Historique conservé.",
+                        "success",
+                      )
                     } else {
                       await api.admin.catalog.deleteProduct(pendingDeletion.id)
                       await loadProducts()
@@ -1515,6 +1518,10 @@ function CatalogProductModal({
                 type === "DRINK" && String(form.get("cartonPrice") ?? "")
                   ? Number(form.get("cartonPrice"))
                   : null,
+              cartonQuantity:
+                type === "DRINK" && String(form.get("cartonQuantity") ?? "")
+                  ? Number(form.get("cartonQuantity"))
+                  : null,
               quoteOnly: form.get("quoteOnly") === "on",
               specs,
               stock:
@@ -1624,16 +1631,28 @@ function CatalogProductModal({
               />
             </label>
             {type === "DRINK" && (
-              <label>
-                Prix du carton (FCFA)
-                <input
-                  type="number"
-                  name="cartonPrice"
-                  min="1"
-                  step="1"
-                  defaultValue={product?.cartonPrice ?? ""}
-                />
-              </label>
+              <>
+                <label>
+                  Bouteilles par carton
+                  <input
+                    type="number"
+                    name="cartonQuantity"
+                    min="1"
+                    step="1"
+                    defaultValue={product?.cartonQuantity ?? ""}
+                  />
+                </label>
+                <label>
+                  Prix du carton (FCFA)
+                  <input
+                    type="number"
+                    name="cartonPrice"
+                    min="1"
+                    step="1"
+                    defaultValue={product?.cartonPrice ?? ""}
+                  />
+                </label>
+              </>
             )}
             {type !== "SERVICE" && (
               <label>
@@ -1690,8 +1709,9 @@ function CatalogProductModal({
             <section className="catalog-tier-editor catalog-product-wide">
               <h3>Prix dégressifs — ventes en gros</h3>
               <p>
-                Facultatif, 5 paliers maximum. Une quantité maximale vide
-                signifie « illimité ».
+                Prix par bouteille selon la quantité commandée. Facultatif, 5
+                paliers maximum. Une quantité maximale vide signifie «
+                illimité ».
               </p>
               {tiers.map((tier, index) => (
                 <div className="catalog-tier-row" key={index}>

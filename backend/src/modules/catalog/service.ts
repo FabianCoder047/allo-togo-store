@@ -166,6 +166,17 @@ export const updateProduct = async (
       )
   }
   const nextPrice = input.price ?? product.price
+  const nextCartonPrice =
+    input.cartonPrice === undefined ? product.cartonPrice : input.cartonPrice
+  const nextCartonQuantity =
+    input.cartonQuantity === undefined
+      ? product.cartonQuantity
+      : input.cartonQuantity
+  if ((nextCartonPrice === null) !== (nextCartonQuantity === null)) {
+    throw conflict(
+      "Le prix et le nombre de bouteilles du carton doivent être renseignés ensemble.",
+    )
+  }
   const nextPreviousPrice =
     input.previousPrice === undefined
       ? product.previousPrice

@@ -79,7 +79,9 @@ export function ProductCard({
             {product.previousPrice && (
               <del>{formatPrice(product.previousPrice)}</del>
             )}
-            {formatPrice(product.price)}
+            {product.quoteOnly || product.price <= 0
+              ? "Tarif à confirmer"
+              : formatPrice(product.price)}
           </strong>
           <span>
             {product.quoteOnly || product.price <= 0
@@ -87,7 +89,10 @@ export function ProductCard({
               : "Prix affiché en FCFA"}
           </span>
           {product.type === "DRINK" && product.cartonPrice && (
-            <span>Carton : {formatPrice(product.cartonPrice)}</span>
+            <span>
+              Carton{product.cartonQuantity ? ` (${product.cartonQuantity})` : ""} :{" "}
+              {formatPrice(product.cartonPrice)}
+            </span>
           )}
           {product.wholesalePrices?.length ? (
             <span>

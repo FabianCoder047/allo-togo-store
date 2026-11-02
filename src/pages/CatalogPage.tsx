@@ -205,7 +205,9 @@ export function CatalogPage({
                         {item.previousPrice && (
                           <del>{formatPrice(item.previousPrice)}</del>
                         )}
-                        {formatPrice(item.price)}
+                        {item.quoteOnly || item.price <= 0
+                          ? "Tarif à confirmer"
+                          : formatPrice(item.price)}
                       </strong>
                       <span>
                         {item.quoteOnly || item.price <= 0
@@ -213,7 +215,13 @@ export function CatalogPage({
                           : "Prix affiché en FCFA"}
                       </span>
                       {type === "drink" && item.cartonPrice && (
-                        <span>Carton : {formatPrice(item.cartonPrice)}</span>
+                        <span>
+                          Carton
+                          {item.cartonQuantity
+                            ? ` (${item.cartonQuantity} bouteilles)`
+                            : ""}
+                          : {formatPrice(item.cartonPrice)}
+                        </span>
                       )}
                       {item.wholesalePrices?.length ? (
                         <span>

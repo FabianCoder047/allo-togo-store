@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Icon } from "../components/Icon"
 import { formatPrice } from "../lib/format"
+import { downloadTrackingPdf } from "../lib/orderPdf"
 import type { OrderGroupCreated } from "../types"
 
 export function ConfirmationPage({
@@ -9,13 +10,33 @@ export function ConfirmationPage({
   navigate: (path: string) => void
 }) {
   const [order, setOrder] = useState<OrderGroupCreated | null>(null)
+  const autoDownloadStarted = useRef(false)
 
   useEffect(() => {
     try {
       const raw = window.sessionStorage.getItem("allo.lastOrder")
-      if (raw) setOrder(JSON.parse(raw) as OrderGroupCreated)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as OrderGroupCreated
+      if (
+        typeof parsed.groupRef !== "string" ||
+        typeof parsed.customer?.name !== "string" ||
+        !Array.isArray(parsed.orders)
+      ) {
+        return
+      }
+      setOrder(parsed)
+      const downloadKey = `allo.orderPdfDownloaded.${parsed.groupRef}`
+      if (
+        !autoDownloadStarted.current &&
+        parsed.orders.length > 0 &&
+        !window.sessionStorage.getItem(downloadKey)
+      ) {
+        autoDownloadStarted.current = true
+        downloadTrackingPdf(parsed.orders, parsed.groupRef, parsed.customer.name)
+        window.sessionStorage.setItem(downloadKey, "true")
+      }
     } catch {
-      setOrder(null)
+      return
     }
   }, [])
 
@@ -109,15 +130,26 @@ export function ConfirmationPage({
         </div>
 
         <div className="notice-box">
-          <strong>Conservez vos codes de suivi</strong>
+          <strong>Votre PDF de suivi est prêt</strong>
           <p>
-            Le suivi public est accessible avec le code ci-dessus. La messagerie
-            privée de chaque commande est protégée par le numéro de téléphone
-            utilisé lors de la commande.
+            Le téléchargement automatique a été lancé. Si votre navigateur ne
+            l’a pas enregistré, téléchargez-le à nouveau ci-dessous.
           </p>
         </div>
 
         <div className="confirmation-actions">
+          <button
+            className="secondary"
+            onClick={() =>
+              downloadTrackingPdf(
+                order.orders,
+                order.groupRef,
+                order.customer.name,
+              )
+            }
+          >
+            <Icon name="download" /> Télécharger mes codes en PDF
+          </button>
           <button
             className="primary"
             onClick={() =>

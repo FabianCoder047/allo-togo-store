@@ -22,18 +22,27 @@ const io = new SocketServer(server, {
   path: "/socket.io",
 })
 
-io.use((socket, next) => {
+io.use(async (socket, next) => {
   const token = socket.handshake.auth?.token as string | undefined
   if (!token) return next(new Error("UNAUTHORIZED"))
   try {
     const user = verifyAccessToken(token)
     if (user.mustChangePassword)
       return next(new Error("PASSWORD_CHANGE_REQUIRED"))
+    const account = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { active: true },
+    })
+    if (!account?.active) return next(new Error("UNAUTHORIZED"))
     socket.data.user = user
     return next()
   } catch {
     return next(new Error("UNAUTHORIZED"))
   }
+})
+
+realtime.on("staff:deactivated", (userId: string) => {
+  io.in(`staff:${userId}`).disconnectSockets(true)
 })
 
 io.on("connection", (socket) => {

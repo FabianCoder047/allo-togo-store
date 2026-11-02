@@ -205,7 +205,9 @@ export function ProductPage({
               {product.previousPrice && (
                 <del>{formatPrice(product.previousPrice)}</del>
               )}
-              {formatPrice(product.price)}
+              {product.quoteOnly || product.price <= 0
+                ? "Tarif à confirmer"
+                : formatPrice(product.price)}
               <small>
                 {canOrder
                   ? product.type === "DRINK"
@@ -215,7 +217,11 @@ export function ProductPage({
               </small>
               {product.type === "DRINK" && product.cartonPrice && (
                 <small>
-                  Prix du carton : {formatPrice(product.cartonPrice)}
+                  Carton
+                  {product.cartonQuantity
+                    ? ` (${product.cartonQuantity} bouteilles)`
+                    : ""}
+                  : {formatPrice(product.cartonPrice)}
                 </small>
               )}
             </div>

@@ -6,6 +6,7 @@ import { generateTemporaryPassword } from "../../lib/ids.js"
 import { hashPassword, revokeAllSessions } from "../auth/service.js"
 import { audit } from "../audit/service.js"
 import { sendStaffCredentialsEmail } from "../notifications/email.js"
+import { realtime } from "../../realtime/events.js"
 import type { z } from "zod"
 import type {
   resetPasswordSchema,
@@ -200,6 +201,7 @@ export const deactivateUser = async (
     select: publicUserSelect,
   })
   await revokeAllSessions(id)
+  realtime.emit("staff:deactivated", id)
   await audit({
     actorId: actor.id,
     actorType: "STAFF",
