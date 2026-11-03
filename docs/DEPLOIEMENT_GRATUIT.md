@@ -74,11 +74,10 @@ node dist/prisma/seed.js --bootstrap
 node dist/src/server.js
 ```
 
-`--bootstrap` ne s’exécute qu’une seule fois. Il crée :
+`--bootstrap` peut être relancé sans risque : il crée uniquement les comptes absents et ne supprime
+ni ne modifie les comptes existants. Il crée :
 
 - les comptes Directeur et informaticien avec les mots de passe `SEED_*` ;
-- les catégories et le catalogue initial ;
-- un marqueur `system.bootstrap.completed` dans `StoreSettings`.
 
 Après le premier déploiement réussi :
 
