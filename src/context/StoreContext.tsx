@@ -15,12 +15,13 @@ import {
   setAccessToken,
   setSessionExpiredHandler,
 } from "../lib/api"
-import { productPriceForQuantity } from "../lib/catalog"
+import { productSelectionTotal } from "../lib/catalog"
 import { identifyAnalytics, resetAnalytics, trackEvent } from "../lib/analytics"
 import type { Product, StaffUser } from "../types"
 
 type ToastTone = "success" | "error" | "info"
 type Toast = { message: string , tone: ToastTone }
+type CartSelection = { quantity: number; cartonCount: number }
 
 interface StoreContextValue {
   products: Product[]
@@ -28,14 +29,19 @@ interface StoreContextValue {
   loadingCatalog: boolean
   catalogError: string | null
   reloadCatalog: () => Promise<void>
-  cart: Record<string, number>
-  addToCart: (id: string, quantity?: number) => void
+  cart: Record<string, CartSelection>
+  addToCart: (id: string, quantity?: number, cartonCount?: number) => void
   setQuantity: (id: string, quantity: number) => void
+  setCartonCount: (id: string, cartonCount: number) => void
   removeFromCart: (id: string) => void
   clearCart: () => void
   cartCount: number
   cartSubtotal: number
-  cartLines: Array<{ product: Product , quantity: number }>
+  cartLines: Array<{
+    product: Product
+    quantity: number
+    cartonCount: number
+  }>
   user: StaffUser | null
   authLoading: boolean
   login: (email: string, password: string) => Promise<StaffUser>
@@ -48,21 +54,43 @@ interface StoreContextValue {
 
 const StoreContext = createContext<StoreContextValue | null>(null)
 
-const CART_KEY = "allo.cart.v1"
+const CART_KEY = "allo.cart.v2"
+const LEGACY_CART_KEY = "allo.cart.v1"
 
-const readCart = (): Record<string, number> => {
+const readCart = (): Record<string, CartSelection> => {
   try {
-    const raw = window.localStorage.getItem(CART_KEY)
+    const raw =
+      window.localStorage.getItem(CART_KEY) ??
+      window.localStorage.getItem(LEGACY_CART_KEY)
     if (!raw) return {}
     const parsed = JSON.parse(raw) as unknown
     if (!parsed || typeof parsed !== "object") return {}
-    const result: Record<string, number> = {}
+    const result: Record<string, CartSelection> = {}
     for (const [key, value] of Object.entries(
       parsed as Record<string, unknown>,
     )) {
-      const quantity = Number(value)
-      if (key && Number.isInteger(quantity) && quantity > 0)
-        result[key] = Math.min(quantity, 99)
+      const selection =
+        value && typeof value === "object"
+          ? (value as Record<string, unknown>)
+          : null
+      const quantity = Number(
+        typeof value === "number" ? value : selection?.quantity,
+      )
+      const cartonCount = Number(selection?.cartonCount ?? 0)
+      if (
+        key &&
+        Number.isInteger(quantity) &&
+        quantity >= 0 &&
+        Number.isInteger(cartonCount) &&
+        cartonCount >= 0 &&
+        quantity + cartonCount > 0
+      ) {
+        const normalizedQuantity = Math.min(quantity, 99)
+        result[key] = {
+          quantity: normalizedQuantity,
+          cartonCount: Math.min(cartonCount, 99 - normalizedQuantity),
+        }
+      }
     }
     return result
   } catch {
@@ -75,7 +103,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [services, setServices] = useState<Product[]>([])
   const [loadingCatalog, setLoadingCatalog] = useState(true)
   const [catalogError, setCatalogError] = useState<string | null>(null)
-  const [cart, setCart] = useState<Record<string, number>>(readCart)
+  const [cart, setCart] = useState<Record<string, CartSelection>>(readCart)
   const [user, setUser] = useState<StaffUser | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [toast, setToast] = useState<Toast | null>(null)
@@ -160,23 +188,73 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     void reloadCatalog()
   }, [reloadCatalog])
 
-  const addToCart = useCallback((id: string, quantity = 1) => {
-    setCart((current) => {
-      const next = Math.min(99, (current[id] ?? 0) + quantity)
-      return { ...current, [id]: next }
-    })
-    trackEvent("cart_item_added", { productId: id, quantity })
-  }, [])
+  const addToCart = useCallback(
+    (id: string, quantity = 1, cartonCount = 0) => {
+      setCart((current) => {
+        const previous = current[id] ?? { quantity: 0, cartonCount: 0 }
+        const remaining = Math.max(
+          0,
+          99 - previous.quantity - previous.cartonCount,
+        )
+        const nextQuantity = Math.min(
+          remaining,
+          Math.max(0, Math.trunc(quantity)),
+        )
+        const nextCartonCount = Math.min(
+          remaining - nextQuantity,
+          Math.max(0, Math.trunc(cartonCount)),
+        )
+        return {
+          ...current,
+          [id]: {
+            quantity: previous.quantity + nextQuantity,
+            cartonCount: previous.cartonCount + nextCartonCount,
+          },
+        }
+      })
+      trackEvent("cart_item_added", { productId: id, quantity, cartonCount })
+    },
+    [],
+  )
 
   const setQuantity = useCallback((id: string, quantity: number) => {
     setCart((current) => {
-      const next = Math.max(0, Math.min(99, Math.trunc(quantity)))
-      if (next === 0) {
+      const previous = current[id] ?? { quantity: 0, cartonCount: 0 }
+      const nextQuantity = Math.max(
+        0,
+        Math.min(
+          99 - previous.cartonCount,
+          Math.trunc(quantity),
+        ),
+      )
+      if (nextQuantity === 0 && previous.cartonCount === 0) {
         const copy = { ...current }
         delete copy[id]
         return copy
       }
-      return { ...current, [id]: next }
+      return {
+        ...current,
+        [id]: { ...previous, quantity: nextQuantity },
+      }
+    })
+  }, [])
+
+  const setCartonCount = useCallback((id: string, cartonCount: number) => {
+    setCart((current) => {
+      const previous = current[id] ?? { quantity: 0, cartonCount: 0 }
+      const nextCartonCount = Math.max(
+        0,
+        Math.min(99 - previous.quantity, Math.trunc(cartonCount)),
+      )
+      if (nextCartonCount === 0 && previous.quantity === 0) {
+        const copy = { ...current }
+        delete copy[id]
+        return copy
+      }
+      return {
+        ...current,
+        [id]: { ...previous, cartonCount: nextCartonCount },
+      }
     })
   }, [])
 
@@ -216,18 +294,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const cartLines = useMemo(
     () =>
       Object.entries(cart)
-        .map(([id, quantity]) => {
+        .map(([id, selection]) => {
           const product = products.find((item) => item.id === id)
-          return product ? { product, quantity } : null
+          return product ? { product, ...selection } : null
         })
-        .filter((line): line is { product: Product ,quantity: number } =>
-          Boolean(line),
+        .filter(
+          (
+            line,
+          ): line is {
+            product: Product
+            quantity: number
+            cartonCount: number
+          } => Boolean(line),
         ),
     [cart, products],
   )
 
   const cartCount = useMemo(
-    () => cartLines.reduce((sum, line) => sum + line.quantity, 0),
+    () =>
+      cartLines.reduce(
+        (sum, line) =>
+          sum + line.quantity + line.cartonCount,
+        0,
+      ),
     [cartLines],
   )
   const cartSubtotal = useMemo(
@@ -235,7 +324,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       cartLines.reduce(
         (sum, line) =>
           sum +
-          productPriceForQuantity(line.product, line.quantity) * line.quantity,
+          productSelectionTotal(
+            line.product,
+            line.quantity,
+            line.cartonCount,
+          ),
         0,
       ),
     [cartLines],
@@ -251,6 +344,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       cart,
       addToCart,
       setQuantity,
+      setCartonCount,
       removeFromCart,
       clearCart,
       cartCount,
@@ -274,6 +368,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       cart,
       addToCart,
       setQuantity,
+      setCartonCount,
       removeFromCart,
       clearCart,
       cartCount,

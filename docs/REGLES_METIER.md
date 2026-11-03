@@ -52,10 +52,8 @@ Messages d'erreur associés :
 - Chaque fiche peut contenir jusqu’à 8 images et 8 vidéos téléversées depuis le poste de l’administrateur, une description et des caractéristiques libres. Formats acceptés : JPEG, GIF, PNG, WebP et AVIF (8 Mo par image), MP4, MOV et WebM (32 Mo par vidéo). Les fichiers sont persistés sur le volume `allotogo-uploads`.
 - Le slug d’une fiche est généré par le serveur depuis son nom ; il n’est pas saisi dans le formulaire.
 - Le prix actuel et le prix avant sont exprimés en FCFA ; le prix avant doit être supérieur au prix actuel.
-- Les fiches peuvent définir jusqu’à 5 paliers de gros : quantité minimale, quantité maximale facultative (vide = illimité) et prix unitaire. Les paliers ne se chevauchent pas, sont triés par quantité croissante et leurs prix diminuent strictement. Le serveur applique le prix du palier correspondant à la quantité totale du produit dans la commande.
-- Pour les boissons, le prix actuel est le prix de l’article et le prix du carton est un tarif distinct, affiché sur la fiche.
-  Le panier reste libellé et calculé à l’article : le nombre d’unités par carton et le choix d’achat au carton ne sont pas
-  définis par le modèle de catalogue.
+- Les fiches peuvent définir jusqu’à 5 paliers de gros : quantité minimale, quantité maximale facultative (vide = illimité) et prix unitaire. Les paliers ne se chevauchent pas, sont triés par quantité croissante et leurs prix diminuent strictement. Le palier unitaire dépend du nombre total de bouteilles commandées, cartons compris, et s’applique aux bouteilles vendues à l’unité ; les cartons sont facturés séparément au prix configuré par carton.
+- Pour les boissons, le client peut commander des bouteilles à l’unité, des cartons ou les deux. Le nombre de bouteilles par carton et son prix sont configurés sur la fiche produit ; le prix du carton reste distinct du tarif unitaire. Le stock, les confirmations, le suivi et les reçus comptabilisent la quantité de bouteilles contenue dans les cartons.
 - Les services n’ont ni quantité de stock ni gestion de stock.
 - Une fiche non référencée par une commande ou un mouvement de stock peut être supprimée. Pour conserver l’historique, une fiche déjà référencée doit être désactivée plutôt que supprimée.
 
@@ -361,11 +359,14 @@ Règles complémentaires :
 - Le fournisseur WhatsApp par défaut est **simulé** : aucun message réel n'est envoyé.
 - Le statut en base distingue `PENDING`, `SENT`, `FAILED` ; un échec n'est jamais présenté comme un envoi.
 - Les notifications en échec peuvent être relancées depuis le back-office.
-- Les emails transactionnels (identifiants des comptes du personnel) passent par SMTP
-  (`EMAIL_PROVIDER=smtp`, `MAIL_*`), un fournisseur HTTP générique (`EMAIL_PROVIDER=http`,
-  `EMAIL_API_URL`, `EMAIL_API_TOKEN`) ou l’API Gmail OAuth (`EMAIL_PROVIDER=google`, `GMAIL_CLIENT_ID`,
-  `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`, `MAIL_USERNAME`). En production, un fournisseur
-  réel est obligatoire.
+- Les emails transactionnels (identifiants des comptes du personnel et liens de réinitialisation)
+  passent par SMTP (`EMAIL_PROVIDER=smtp`, `MAIL_*`), un fournisseur HTTP générique
+  (`EMAIL_PROVIDER=http`, `EMAIL_API_URL`, `EMAIL_API_TOKEN`) ou l’API Gmail OAuth
+  (`EMAIL_PROVIDER=google`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`,
+  `MAIL_USERNAME`). En développement, `EMAIL_PROVIDER=simulated` journalise les emails ; en
+  production, un fournisseur réel est obligatoire.
+- Un lien de réinitialisation est à usage unique et expire après 30 minutes. La réponse de demande
+  ne révèle pas si l’adresse correspond à un compte actif.
 
 ---
 

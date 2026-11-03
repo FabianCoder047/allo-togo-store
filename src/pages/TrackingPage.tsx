@@ -10,6 +10,7 @@ import {
 } from "../components/ui"
 import { api, errorMessage } from "../lib/api"
 import { formatDate, formatPrice } from "../lib/format"
+import { orderItemDescription } from "../lib/catalog"
 import { fulfillmentLabels } from "../lib/labels"
 import { downloadTrackingPdf } from "../lib/orderPdf"
 import { trackEvent } from "../lib/analytics"
@@ -571,7 +572,7 @@ export function TrackingPage({
                 {tracking.items.map((item, index) => (
                   <li key={`${item.productName}-${index}`}>
                     <span>
-                      {item.productName} × {item.quantity}
+                      {orderItemDescription(item)}
                     </span>
                     <strong>{formatPrice(item.lineTotal)}</strong>
                   </li>

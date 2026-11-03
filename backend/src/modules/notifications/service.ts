@@ -62,7 +62,15 @@ type OrderForNotification = Order & { items: OrderItem[] }
 export const buildOrderNotificationPayload = (order: OrderForNotification) => {
   const trackingUrl = `${env.PUBLIC_APP_URL.replace(/\/$/, "")}/suivi/${order.trackingCode}`
   const items = order.items
-    .map((item) => `${item.quantity} × ${item.productName}`)
+    .map((item) => {
+      const quantities = [
+        item.quantity > 0 ? `${item.quantity} bouteille(s)` : "",
+        item.cartonCount > 0
+          ? `${item.cartonCount} carton(s) (${item.cartonCount * (item.cartonQuantity ?? 0)} bouteilles)`
+          : "",
+      ].filter(Boolean)
+      return `${item.productName} — ${quantities.join(" + ") || item.quantity}`
+    })
     .join(", ")
   return {
     business: "Allo Togo",

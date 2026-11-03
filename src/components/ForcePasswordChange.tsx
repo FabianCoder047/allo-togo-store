@@ -74,75 +74,81 @@ export function ForcePasswordChange({
           {error && <Alert tone="error">{error}</Alert>}
           <label>
             Mot de passe provisoire
-            <input
-              type={showCurrentPassword ? "text" : "password"}
-              name="currentPassword"
-              required
-              autoComplete="current-password"
-              minLength={6}
-              placeholder="Reçu par email"
-            />
-            <button
-              type="button"
-              className="password-toggle"
-              onClick={() => setShowCurrentPassword((visible) => !visible)}
-              aria-label={
-                showCurrentPassword
-                  ? "Masquer le mot de passe"
-                  : "Afficher le mot de passe"
-              }
-              aria-pressed={showCurrentPassword}
-            >
-              <Icon name={showCurrentPassword ? "eyeOff" : "eye"} size={16} />
-            </button>
+            <span className="login-input-wrap">
+              <input
+                type={showCurrentPassword ? "text" : "password"}
+                name="currentPassword"
+                required
+                autoComplete="current-password"
+                minLength={6}
+                placeholder="Reçu par email"
+              />
+              <button
+                type="button"
+                className="login-password-toggle"
+                onClick={() => setShowCurrentPassword((visible) => !visible)}
+                aria-label={
+                  showCurrentPassword
+                    ? "Masquer le mot de passe"
+                    : "Afficher le mot de passe"
+                }
+                aria-pressed={showCurrentPassword}
+              >
+                <Icon name={showCurrentPassword ? "eyeOff" : "eye"} size={16} />
+              </button>
+            </span>
           </label>
           <label>
             Nouveau mot de passe
-            <input
-              type={showNewPassword ? "text" : "password"}
-              name="newPassword"
-              required
-              autoComplete="new-password"
-              minLength={8}
-              placeholder="8 caractères minimum"
-            />
-            <button
-              type="button"
-              className="password-toggle"
-              onClick={() => setShowNewPassword((visible) => !visible)}
-              aria-label={
-                showNewPassword
-                  ? "Masquer le mot de passe"
-                  : "Afficher le mot de passe"
-              }
-              aria-pressed={showNewPassword}
-            >
-              <Icon name={showNewPassword ? "eyeOff" : "eye"} size={16} />
-            </button>
+            <span className="login-input-wrap">
+              <input
+                type={showNewPassword ? "text" : "password"}
+                name="newPassword"
+                required
+                autoComplete="new-password"
+                minLength={8}
+                placeholder="8 caractères minimum"
+              />
+              <button
+                type="button"
+                className="login-password-toggle"
+                onClick={() => setShowNewPassword((visible) => !visible)}
+                aria-label={
+                  showNewPassword
+                    ? "Masquer le mot de passe"
+                    : "Afficher le mot de passe"
+                }
+                aria-pressed={showNewPassword}
+              >
+                <Icon name={showNewPassword ? "eyeOff" : "eye"} size={16} />
+              </button>
+            </span>
           </label>
           <label>
             Confirmer le nouveau mot de passe
-            <input
-              type={showConfirmation ? "text" : "password"}
-              name="confirmation"
-              required
-              autoComplete="new-password"
-              minLength={8}
-              placeholder="Répétez le mot de passe"
-            />
-            <button
-              type="button"
-              className="password-toggle"
-              onClick={() => setShowConfirmation((visible) => !visible)}
-              aria-label={
-                showConfirmation
-                  ? "Masquer le mot de passe"
-                  : "Afficher le mot de passe"
-              }
-              aria-pressed={showConfirmation}
-            >
-              <Icon name={showConfirmation ? "eyeOff" : "eye"} size={16} />
-            </button>
+            <span className="login-input-wrap">
+              <input
+                type={showConfirmation ? "text" : "password"}
+                name="confirmation"
+                required
+                autoComplete="new-password"
+                minLength={8}
+                placeholder="Répétez le mot de passe"
+              />
+              <button
+                type="button"
+                className="login-password-toggle"
+                onClick={() => setShowConfirmation((visible) => !visible)}
+                aria-label={
+                  showConfirmation
+                    ? "Masquer le mot de passe"
+                    : "Afficher le mot de passe"
+                }
+                aria-pressed={showConfirmation}
+              >
+                <Icon name={showConfirmation ? "eyeOff" : "eye"} size={16} />
+              </button>
+            </span>
           </label>
           <p className="login-note">
             Le nouveau mot de passe doit contenir au moins 8 caractères, une

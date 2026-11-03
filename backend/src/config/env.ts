@@ -50,7 +50,9 @@ const envSchema = z.object({
   SMS_TOKEN: z.string().optional(),
   SMS_SENDER: z.string().optional(),
 
-  EMAIL_PROVIDER: z.enum(["smtp", "http", "google"]).default("smtp"),
+  EMAIL_PROVIDER: z
+    .enum(["simulated", "smtp", "http", "google"])
+    .default("smtp"),
   EMAIL_FROM: z.string().default("Allo Togo Store <no-reply@allotogo.test>"),
   EMAIL_API_URL: z.union([z.string().url(), z.literal("")]).optional(),
   EMAIL_API_TOKEN: z.string().optional(),

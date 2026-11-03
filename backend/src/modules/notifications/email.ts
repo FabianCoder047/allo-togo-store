@@ -15,6 +15,15 @@ export interface EmailProvider {
   send(message: EmailMessage): Promise<{ providerMessageId: string }>
 }
 
+export class SimulatedEmailProvider implements EmailProvider {
+  readonly name = "simulated"
+
+  async send(message: EmailMessage) {
+    console.info(`[EMAIL SIMULÉ] ${JSON.stringify(message)}`)
+    return { providerMessageId: `simulated-email-${Date.now()}` }
+  }
+}
+
 const encodeMimeHeader = (value: string) =>
   `=?UTF-8?B?${Buffer.from(value, "utf8").toString("base64")}?=`
 
@@ -199,24 +208,33 @@ export class SmtpEmailProvider implements EmailProvider {
 
 export const emailMode = () => ({
   provider: env.EMAIL_PROVIDER,
+  simulated: env.EMAIL_PROVIDER === "simulated",
   configured:
-    env.EMAIL_PROVIDER === "smtp"
-      ? Boolean(
-          env.MAIL_USERNAME &&
-            env.MAIL_PASSWORD &&
-            (env.MAIL_FROM || env.MAIL_USERNAME),
-        )
-      : env.EMAIL_PROVIDER === "google"
+    env.EMAIL_PROVIDER === "simulated"
+      ? !env.isProduction
+      : env.EMAIL_PROVIDER === "smtp"
         ? Boolean(
-            env.GMAIL_CLIENT_ID &&
-              env.GMAIL_CLIENT_SECRET &&
-              env.GMAIL_REFRESH_TOKEN &&
-              env.MAIL_USERNAME,
+            env.MAIL_USERNAME &&
+              env.MAIL_PASSWORD &&
+              (env.MAIL_FROM || env.MAIL_USERNAME),
           )
-        : Boolean(env.EMAIL_API_URL && env.EMAIL_API_TOKEN),
+        : env.EMAIL_PROVIDER === "google"
+          ? Boolean(
+              env.GMAIL_CLIENT_ID &&
+                env.GMAIL_CLIENT_SECRET &&
+                env.GMAIL_REFRESH_TOKEN &&
+                env.MAIL_USERNAME,
+            )
+          : Boolean(env.EMAIL_API_URL && env.EMAIL_API_TOKEN),
 })
 
 const buildEmailProvider = (): EmailProvider => {
+  if (env.EMAIL_PROVIDER === "simulated") {
+    if (env.isProduction) {
+      throw new Error("EMAIL_PROVIDER=simulated est interdit en production.")
+    }
+    return new SimulatedEmailProvider()
+  }
   if (env.EMAIL_PROVIDER === "smtp") {
     if (!env.MAIL_USERNAME || !env.MAIL_PASSWORD) {
       throw new Error(
@@ -331,6 +349,26 @@ export const sendStaffCredentialsEmail = async (input: {
     <p>Ce mot de passe provisoire expire dans 15 minutes. Connectez-vous et changez-le avant son expiration.</p>
     <p>Ce mot de passe est temporaire. Vous devrez le changer dès votre première connexion.</p>
     <p>Si vous n’êtes pas à l’origine de cette demande, contactez la direction Allo Togo.</p>
+  `.trim()
+
+  return sendEmail({ to: input.email, subject, text, html })
+}
+
+export const sendPasswordResetEmail = async (input: {
+  email: string
+  resetUrl: string
+}) => {
+  const subject = "Réinitialisation de votre mot de passe Allo Togo Store"
+  const text = [
+    "Une demande de réinitialisation du mot de passe de votre compte Allo Togo Store a été reçue.",
+    `Utilisez ce lien dans les 30 minutes : ${input.resetUrl}`,
+    "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.",
+  ].join("\n\n")
+  const html = `
+    <p>Une demande de réinitialisation du mot de passe de votre compte Allo Togo Store a été reçue.</p>
+    <p><a href="${escapeHtml(input.resetUrl)}">Choisir un nouveau mot de passe</a></p>
+    <p>Ce lien expire dans 30 minutes.</p>
+    <p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
   `.trim()
 
   return sendEmail({ to: input.email, subject, text, html })

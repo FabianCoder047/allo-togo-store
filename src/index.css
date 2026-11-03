@@ -413,6 +413,18 @@ footer { background: #2E1740; color: white; padding: 68px 0 25px; }
 .cart-row > div:nth-child(2) span { color: var(--orange-dark); font-size: 8px; text-transform: uppercase; font-weight: 700; }
 .cart-row h3 { font-size: 13px; margin: 4px 0; }
 .cart-row strong { font-size: 11px; }
+.cart-package-controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+.cart-package-controls > div > span { display: block; color: var(--muted); font-size: 8px; font-weight: 600; }
+.cart-package-controls .qty { margin-top: 5px; }
+.cart-package-controls .qty button:disabled { opacity: .4; cursor: not-allowed; }
+.cart-package-controls.compact { gap: 10px; align-items: flex-start; }
+.cart-package-controls.compact .qty button { width: 24px; height: 24px; }
+.drink-order-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.drink-order-options h2 { grid-column: 1 / -1; margin: 0; font-size: 13px; }
+.drink-order-options label { display: grid; gap: 6px; color: var(--ink-2); font-size: 9px; font-weight: 700; }
+.drink-order-options input { width: 100%; min-height: 42px; border: 1px solid var(--line); border-radius: 9px; padding: 0 11px; background: white; color: var(--ink); }
+.drink-order-options input:focus { border-color: var(--orange); outline: 0; box-shadow: 0 0 0 3px var(--orange-soft); }
+.drink-order-options > div { grid-column: 1 / -1; display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--line); font-size: 10px; }
 .remove-btn { border: 0; background: transparent; color: var(--muted); padding: 8px; }
 .order-summary { background: white; border-radius: 17px; padding: 26px; position: sticky; top: 106px; border: 1px solid var(--line); }
 .order-summary h2 { font-size: 19px; margin: 0 0 22px; }
@@ -741,7 +753,7 @@ footer { background: #2E1740; color: white; padding: 68px 0 25px; }
   .service-catalog { grid-template-columns: 1fr; }
   .cart-row { grid-template-columns: 80px 1fr auto; }
   .cart-row > img { width: 80px; height: 75px; }
-  .cart-row .qty { grid-column: 2; }
+  .cart-row .qty { grid-column: auto; }
   .cart-row .remove-btn { grid-column: 3; grid-row: 1; }
   .order-summary { position: static; }
   .confirmation-card { padding: 40px 24px; }
@@ -959,6 +971,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .login-brand p { color: #B9A9C6; font-size: 11px; line-height: 1.75; margin: 0; }
 .login-form { padding: 44px; display: grid; gap: 15px; align-content: center; }
 .login-form label { display: grid; gap: 7px; font-size: 10px; font-weight: 700; }
+.login-form > label > input { width: 100%; min-width: 0; min-height: 46px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--ink); font-size: 11px; outline: 0; transition: border-color .18s ease, box-shadow .18s ease; }
+.login-form > label > input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-soft); }
 .login-input-wrap { min-height: 46px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); transition: border-color .18s ease, box-shadow .18s ease; }
 .login-input-wrap:focus-within { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-soft); color: var(--orange-dark); }
 .login-input-wrap > svg { flex: 0 0 auto; }

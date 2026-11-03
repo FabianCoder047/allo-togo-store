@@ -311,7 +311,11 @@ export const api = {
         mapUrl?: string | null
       }
       requiresTechnician: boolean
-      items: Array<{ productId: string , quantity: number }>
+      items: Array<{
+        productId: string
+        quantity: number
+        cartonCount: number
+      }>
     }) =>
       unwrap(
         request<{ data: OrderGroupCreated }>("/orders", {
@@ -598,6 +602,16 @@ export const api = {
       request<void>("/auth/change-password", {
         method: "POST",
         body: { currentPassword, newPassword },
+      }),
+    requestPasswordReset: (email: string) =>
+      request<void>("/auth/password-reset/request", {
+        method: "POST",
+        body: { email },
+      }),
+    resetPassword: (token: string, newPassword: string) =>
+      request<void>("/auth/password-reset/confirm", {
+        method: "POST",
+        body: { token, newPassword },
       }),
   },
 

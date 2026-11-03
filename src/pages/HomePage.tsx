@@ -194,10 +194,6 @@ export function HomePage({
               ))}
             </div>
           )}
-          <p className="demo-note">
-            Catalogue connecté à l’API Allo Togo — disponibilités et tarifs à
-            confirmer avant la livraison.
-          </p>
         </div>
       </section>
 

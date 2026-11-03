@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf"
 import { fulfillmentLabels } from "./labels"
 import { formatDate, formatPrice } from "./format"
+import { orderItemDescription } from "./catalog"
 
 export interface TrackingPdfOrder {
   orderNumber: string
@@ -13,6 +14,8 @@ export interface TrackingPdfOrder {
   items: Array<{
     productName: string
     quantity: number
+    cartonCount: number
+    cartonQuantity: number | null
     lineTotal: number
   }>
   timeline?: Array<{
@@ -62,7 +65,7 @@ export function downloadTrackingPdf(
     addLines("Articles", 12, true)
     for (const item of order.items) {
       addLines(
-        `${item.productName} x ${item.quantity} - ${formatPrice(item.lineTotal)}`,
+        `${orderItemDescription(item)} - ${formatPrice(item.lineTotal)}`,
       )
     }
     addLines(`Total : ${formatPrice(order.total)}`, 12, true)

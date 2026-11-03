@@ -1,13 +1,24 @@
 import { Icon } from "../components/Icon"
 import { PageHero, EmptyState } from "../components/ui"
 import { productImage } from "../components/ProductCard"
+import { CartPackageControls } from "../components/CartPackageControls"
 import { useStore } from "../context/StoreContext"
 import { formatPrice } from "../lib/format"
-import { productPriceForQuantity } from "../lib/catalog"
+import {
+  orderItemQuantityLabel,
+  productPriceForQuantity,
+  productSelectionTotal,
+} from "../lib/catalog"
 
 export function CartPage({ navigate }: { navigate: (path: string) => void }) {
-  const { cartLines, cartSubtotal, setQuantity, removeFromCart, cartCount } =
-    useStore()
+  const {
+    cartLines,
+    cartSubtotal,
+    setQuantity,
+    setCartonCount,
+    removeFromCart,
+    cartCount,
+  } = useStore()
 
   return (
     <main>
@@ -33,7 +44,7 @@ export function CartPage({ navigate }: { navigate: (path: string) => void }) {
                 }
               />
             ) : (
-              cartLines.map(({ product, quantity }) => (
+              cartLines.map(({ product, quantity, cartonCount }) => (
                 <article className="cart-row" key={product.id}>
                   <img
                     src={productImage(product)}
@@ -44,36 +55,51 @@ export function CartPage({ navigate }: { navigate: (path: string) => void }) {
                       {product.type === "GPS" ? "Traceur GPS" : "Boisson"}
                     </span>
                     <h3>{product.name}</h3>
-                    <strong>
-                      {formatPrice(productPriceForQuantity(product, quantity))}{" "}
-                      / unité
-                    </strong>
+                    {quantity > 0 && (
+                      <strong>
+                        {formatPrice(
+                          productPriceForQuantity(
+                            product,
+                            quantity +
+                              cartonCount * (product.cartonQuantity ?? 0),
+                          ),
+                        )}{" "}
+                        / {product.type === "DRINK" ? "bouteille" : "unité"}
+                      </strong>
+                    )}
                     {product.previousPrice && (
                       <small>
                         Avant : {formatPrice(product.previousPrice)}
                       </small>
                     )}
-                    {product.type === "DRINK" && product.cartonPrice && (
+                    {cartonCount > 0 && product.cartonPrice && (
                       <small>
-                        Prix du carton : {formatPrice(product.cartonPrice)}
+                        {cartonCount} carton(s) ×{" "}
+                        {formatPrice(product.cartonPrice)}
+                      </small>
+                    )}
+                    {cartonCount > 0 && (
+                      <small>
+                        Détail :{" "}
+                        {orderItemQuantityLabel({
+                          quantity,
+                          cartonCount,
+                          cartonQuantity: product.cartonQuantity,
+                        })}
                       </small>
                     )}
                   </div>
-                  <div className="qty">
-                    <button
-                      onClick={() => setQuantity(product.id, quantity - 1)}
-                      aria-label="Diminuer la quantité"
-                    >
-                      <Icon name="minus" size={15} />
-                    </button>
-                    <b>{quantity}</b>
-                    <button
-                      onClick={() => setQuantity(product.id, quantity + 1)}
-                      aria-label="Augmenter la quantité"
-                    >
-                      <Icon name="plus" size={15} />
-                    </button>
-                  </div>
+                  <CartPackageControls
+                    product={product}
+                    quantity={quantity}
+                    cartonCount={cartonCount}
+                    onQuantityChange={(next) =>
+                      setQuantity(product.id, next)
+                    }
+                    onCartonCountChange={(next) =>
+                      setCartonCount(product.id, next)
+                    }
+                  />
                   <button
                     className="remove-btn"
                     onClick={() => removeFromCart(product.id)}

@@ -5,7 +5,8 @@ import { PageHero, EmptyState } from "../components/ui"
 import { useStore } from "../context/StoreContext"
 import { api, errorMessage } from "../lib/api"
 import { formatPrice } from "../lib/format"
-import { productPriceForQuantity } from "../lib/catalog"
+import { purchaseQuantityLabel } from "../lib/catalog"
+import { productSelectionTotal } from "../lib/catalog"
 import { trackEvent } from "../lib/analytics"
 import type { DeliveryPointSelection } from "../lib/googleMaps"
 import type { OrderGroupCreated } from "../types"
@@ -105,6 +106,7 @@ export function CheckoutPage({
         items: cartLines.map((line) => ({
           productId: line.product.id,
           quantity: line.quantity,
+          cartonCount: line.cartonCount,
         })),
       })
       window.sessionStorage.setItem("allo.lastOrder", JSON.stringify(result))
@@ -316,12 +318,22 @@ export function CheckoutPage({
             {cartLines.map((line) => (
               <div key={line.product.id}>
                 <span>
-                  {line.product.name} × {line.quantity}
+                  {line.product.name}
+                  {line.product.type === "DRINK"
+                    ? ` — ${purchaseQuantityLabel(
+                        line.quantity,
+                        line.cartonCount,
+                        line.product.cartonQuantity,
+                      )}`
+                    : ` × ${line.quantity}`}
                 </span>
                 <strong>
                   {formatPrice(
-                    productPriceForQuantity(line.product, line.quantity) *
+                    productSelectionTotal(
+                      line.product,
                       line.quantity,
+                      line.cartonCount,
+                    ),
                   )}
                 </strong>
               </div>

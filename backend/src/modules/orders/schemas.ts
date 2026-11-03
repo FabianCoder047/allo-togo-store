@@ -57,7 +57,10 @@ export const checkoutSchema = z
       .array(
         z.object({
           productId: z.string().min(1),
-          quantity: z.number().int().min(1).max(99),
+          quantity: z.number().int().min(0).max(99).default(0),
+          cartonCount: z.number().int().min(0).max(99).default(0),
+        }).refine((item) => item.quantity + item.cartonCount > 0, {
+          message: "Choisissez au moins une unité ou un carton.",
         }),
       )
       .min(1, "Le panier est vide.")

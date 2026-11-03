@@ -4,6 +4,7 @@ import { ChatComposer, ChatMessageList } from "./Chat"
 import { Alert, LoadingState, OrderProgress, StatusBadge } from "./ui"
 import { api, errorMessage } from "../lib/api"
 import { formatDate, formatMoney, formatPrice, initials } from "../lib/format"
+import { orderItemDescription } from "../lib/catalog"
 import { googleMapsUrlForCoordinates } from "../lib/googleMaps"
 import { getStaffSocket } from "../lib/realtime"
 import {
@@ -411,7 +412,7 @@ export function OrderDetailPanel({
             {order.items.map((item) => (
               <li key={item.id}>
                 <span>
-                  {item.productName} × {item.quantity}
+                  {orderItemDescription(item)}
                 </span>
                 <strong>{formatPrice(item.lineTotal)}</strong>
               </li>

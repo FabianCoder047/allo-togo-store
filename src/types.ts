@@ -168,6 +168,9 @@ export interface OrderItem {
   productType: ProductType
   unitPrice: number
   quantity: number
+  cartonCount: number
+  cartonQuantity: number | null
+  cartonUnitPrice: number | null
   lineTotal: number
 }
 
@@ -223,6 +226,9 @@ export interface PublicTracking {
     productName: string
     quantity: number
     unitPrice: number
+    cartonCount: number
+    cartonQuantity: number | null
+    cartonUnitPrice: number | null
     lineTotal: number
   }>
   timeline: TrackingTimelineEntry[]

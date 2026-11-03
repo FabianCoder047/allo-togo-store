@@ -1,0 +1,4 @@
+ALTER TABLE "OrderItem"
+ADD COLUMN "cartonCount" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "cartonQuantity" INTEGER,
+ADD COLUMN "cartonUnitPrice" INTEGER;

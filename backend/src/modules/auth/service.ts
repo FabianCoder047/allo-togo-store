@@ -5,6 +5,7 @@ import { env } from "../../config/env.js"
 import { unauthorized, badRequest } from "../../lib/errors.js"
 import { randomToken, sha256 } from "../../lib/ids.js"
 import type { StaffRole } from "@prisma/client"
+import { sendPasswordResetEmail } from "../notifications/email.js"
 
 export type AuthUser = {
   id: string
@@ -211,6 +212,82 @@ export const changePassword = async (
     },
   })
   await revokeAllSessions(userId)
+}
+
+export const requestPasswordReset = async (email: string) => {
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
+    select: { id: true, email: true, active: true },
+  })
+  if (!user || !user.active) return
+
+  const token = randomToken(32)
+  const tokenHash = sha256(token)
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000)
+  await prisma.$transaction([
+    prisma.passwordResetToken.deleteMany({ where: { userId: user.id } }),
+    prisma.passwordResetToken.create({
+      data: { userId: user.id, tokenHash, expiresAt },
+    }),
+  ])
+
+  const resetUrl = new URL("/forgot-password", env.PUBLIC_APP_URL)
+  resetUrl.searchParams.set("token", token)
+  try {
+    await sendPasswordResetEmail({
+      email: user.email,
+      resetUrl: resetUrl.toString(),
+    })
+  } catch (error) {
+    await prisma.passwordResetToken.deleteMany({ where: { tokenHash } })
+    throw error
+  }
+}
+
+export const resetPassword = async (token: string, newPassword: string) => {
+  const resetToken = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash: sha256(token) },
+    select: { id: true, userId: true, expiresAt: true, usedAt: true },
+  })
+  if (
+    !resetToken ||
+    resetToken.usedAt ||
+    resetToken.expiresAt.getTime() <= Date.now()
+  ) {
+    throw badRequest("Ce lien de réinitialisation est invalide ou a expiré.")
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS)
+  await prisma.$transaction(async (transaction) => {
+    const claimed = await transaction.passwordResetToken.updateMany({
+      where: {
+        id: resetToken.id,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      data: { usedAt: new Date() },
+    })
+    if (claimed.count !== 1) {
+      throw badRequest("Ce lien de réinitialisation est invalide ou a expiré.")
+    }
+
+    const updatedUser = await transaction.user.updateMany({
+      where: { id: resetToken.userId, active: true },
+      data: {
+        passwordHash,
+        mustChangePassword: false,
+        passwordExpiresAt: null,
+      },
+    })
+    if (updatedUser.count !== 1) {
+      throw badRequest("Ce lien de réinitialisation est invalide ou a expiré.")
+    }
+    await transaction.refreshSession.updateMany({
+      where: { userId: resetToken.userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    })
+  })
+  return resetToken.userId
 }
 
 export const hashPassword = (password: string) =>

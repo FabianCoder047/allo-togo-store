@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Icon } from "../components/Icon"
 import { formatPrice } from "../lib/format"
+import { orderItemDescription } from "../lib/catalog"
 import { downloadTrackingPdf } from "../lib/orderPdf"
 import type { OrderGroupCreated } from "../types"
 
@@ -108,7 +109,7 @@ export function ConfirmationPage({
                 {created.items.map((item) => (
                   <li key={item.id}>
                     <span>
-                      {item.productName} × {item.quantity}
+                      {orderItemDescription(item)}
                     </span>
                     <strong>{formatPrice(item.lineTotal)}</strong>
                   </li>

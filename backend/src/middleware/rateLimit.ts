@@ -32,6 +32,20 @@ export const loginLimiter = rateLimit({
   },
 })
 
+export const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60_000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: skipInTest,
+  message: {
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Trop de demandes de réinitialisation. Réessayez plus tard.",
+    },
+  },
+})
+
 export const assistantLimiter = rateLimit({
   windowMs: 60_000,
   limit: 30,

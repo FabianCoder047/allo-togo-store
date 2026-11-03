@@ -16,9 +16,14 @@ import { ServicesPage, ServiceDetailPage } from "./pages/ServicesPage"
 import { StaffPage } from "./pages/StaffPage"
 import { CashRegisterPage } from "./pages/CashRegisterPage"
 import { TrackingPage } from "./pages/TrackingPage"
+import { PasswordResetPage } from "./pages/PasswordResetPage"
+import { CartPackageControls } from "./components/CartPackageControls"
 import { BRAND_LOGO } from "./lib/brand"
 import { formatPrice } from "./lib/format"
-import { productPriceForQuantity } from "./lib/catalog"
+import {
+  orderItemQuantityLabel,
+  productSelectionTotal,
+} from "./lib/catalog"
 import { productImage } from "./components/ProductCard"
 
 type Navigate = (path: string) => void
@@ -38,6 +43,7 @@ export default function App() {
     cartCount,
     cartSubtotal,
     setQuantity,
+    setCartonCount,
     removeFromCart,
     toast,
     dismissToast,
@@ -77,6 +83,8 @@ export default function App() {
     setMenuOpen(false)
   }
 
+  if (route === "/forgot-password")
+    return <PasswordResetPage navigate={navigate} />
   if (route === "/admin") return <AdminPage navigate={navigate} />
   if (route === "/staff" || route === "/conseiller")
     return <StaffPage navigate={navigate} />
@@ -346,38 +354,47 @@ export default function App() {
                   </button>
                 </div>
               ) : (
-                cartLines.map(({ product, quantity }) => (
+                cartLines.map(({ product, quantity, cartonCount }) => (
                   <article className="cart-item" key={product.id}>
                     <img src={productImage(product)} alt="" />
                     <div>
                       <h3>{product.name}</h3>
                       <span>
+                        {product.type === "DRINK"
+                          ? orderItemQuantityLabel({
+                              quantity,
+                              cartonCount,
+                              cartonQuantity: product.cartonQuantity,
+                            })
+                          : `${quantity} unité(s)`}
+                        {" · "}
                         {formatPrice(
-                          productPriceForQuantity(product, quantity),
+                          productSelectionTotal(
+                            product,
+                            quantity,
+                            cartonCount,
+                          ),
                         )}
                       </span>
-                      <div className="qty">
-                        <button
-                          onClick={() => setQuantity(product.id, quantity - 1)}
-                          aria-label="Diminuer"
-                        >
-                          <Icon name="minus" size={15} />
-                        </button>
-                        <b>{quantity}</b>
-                        <button
-                          onClick={() => setQuantity(product.id, quantity + 1)}
-                          aria-label="Augmenter"
-                        >
-                          <Icon name="plus" size={15} />
-                        </button>
-                        <button
-                          className="drawer-remove"
-                          onClick={() => removeFromCart(product.id)}
-                          aria-label="Retirer"
-                        >
-                          <Icon name="x" size={14} />
-                        </button>
-                      </div>
+                      <CartPackageControls
+                        compact
+                        product={product}
+                        quantity={quantity}
+                        cartonCount={cartonCount}
+                        onQuantityChange={(next) =>
+                          setQuantity(product.id, next)
+                        }
+                        onCartonCountChange={(next) =>
+                          setCartonCount(product.id, next)
+                        }
+                      />
+                      <button
+                        className="drawer-remove"
+                        onClick={() => removeFromCart(product.id)}
+                        aria-label="Retirer"
+                      >
+                        <Icon name="x" size={14} />
+                      </button>
                     </div>
                   </article>
                 ))

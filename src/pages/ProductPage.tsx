@@ -6,7 +6,10 @@ import { productImage } from "../components/ProductCard"
 import { useStore } from "../context/StoreContext"
 import { api, errorMessage } from "../lib/api"
 import { formatPrice } from "../lib/format"
-import { wholesaleQuantityLabel } from "../lib/catalog"
+import {
+  productSelectionTotal,
+  wholesaleQuantityLabel,
+} from "../lib/catalog"
 import { trackEvent } from "../lib/analytics"
 import type { Product } from "../types"
 
@@ -29,10 +32,17 @@ export function ProductPage({
   navigate: (path: string) => void
 }) {
   const { products, loadingCatalog, addToCart, notify } = useStore()
+  const [unitQuantity, setUnitQuantity] = useState(1)
+  const [cartonCount, setCartonCount] = useState(0)
   const [product, setProduct] = useState<Product | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null)
+
+  useEffect(() => {
+    setUnitQuantity(1)
+    setCartonCount(0)
+  }, [id])
 
   useEffect(() => {
     const fromStore = products.find(
@@ -101,7 +111,15 @@ export function ProductPage({
 
   const isGps = product.type === "GPS"
   const isService = product.type === "SERVICE"
-  const canOrder = product.available && !product.quoteOnly && product.price > 0
+  const canOrder =
+    product.available &&
+    !product.quoteOnly &&
+    (product.price > 0 ||
+      (product.type === "DRINK" && (product.cartonPrice ?? 0) > 0))
+  const canOrderCartons =
+    product.type === "DRINK" &&
+    product.cartonPrice !== null &&
+    product.cartonQuantity !== null
   const selectedVideo = product.videos?.find(
     (video) => video.url === selectedMedia,
   )
@@ -117,7 +135,23 @@ export function ProductPage({
       navigate(`/service/${product.id}`)
       return
     }
-    addToCart(product.id)
+    if (product.type === "DRINK") {
+      if (unitQuantity + cartonCount === 0) {
+        notify("Choisissez au moins une bouteille ou un carton.", "error")
+        return
+      }
+      if (unitQuantity + cartonCount > 99) {
+        notify("La limite est de 99 unités ou cartons par produit.", "error")
+        return
+      }
+      addToCart(
+        product.id,
+        unitQuantity,
+        canOrderCartons ? cartonCount : 0,
+      )
+    } else {
+      addToCart(product.id)
+    }
     notify(`${product.name} ajouté au panier.`, "success")
   }
 
@@ -257,7 +291,74 @@ export function ProductPage({
                   : "Ce produit ne peut pas être commandé directement. Transmettez une demande de devis pour recevoir une proposition adaptée."}
               </p>
             </div>
-            <button className="primary wide" onClick={add}>
+            {canOrder && product.type === "DRINK" && (
+              <div className="drink-order-options">
+                <h2>Choisissez vos quantités</h2>
+                <label>
+                  Bouteilles à l’unité
+                  <input
+                    type="number"
+                    min={0}
+                    max={99 - cartonCount}
+                    value={unitQuantity}
+                    onChange={(event) =>
+                      setUnitQuantity(
+                        Math.max(
+                          0,
+                          Math.min(
+                            99 - cartonCount,
+                            Math.trunc(Number(event.target.value) || 0),
+                          ),
+                        ),
+                      )
+                    }
+                  />
+                </label>
+                {canOrderCartons && (
+                  <label>
+                    Cartons ({product.cartonQuantity} bouteilles/carton)
+                    <input
+                      type="number"
+                      min={0}
+                      max={99 - unitQuantity}
+                      value={cartonCount}
+                      onChange={(event) =>
+                        setCartonCount(
+                          Math.max(
+                            0,
+                            Math.min(
+                              99 - unitQuantity,
+                              Math.trunc(Number(event.target.value) || 0),
+                            ),
+                          ),
+                        )
+                      }
+                    />
+                  </label>
+                )}
+                <div>
+                  <span>Total estimé</span>
+                  <strong>
+                    {formatPrice(
+                      productSelectionTotal(
+                        product,
+                        unitQuantity,
+                        canOrderCartons ? cartonCount : 0,
+                      ),
+                    )}
+                  </strong>
+                </div>
+              </div>
+            )}
+            <button
+              className="primary wide"
+              onClick={add}
+              disabled={
+                canOrder &&
+                product.type === "DRINK" &&
+                unitQuantity + cartonCount === 0
+              }
+            >
               {canOrder ? "Ajouter au panier" : "Demander un devis"}{" "}
               <Icon name={canOrder ? "bag" : "arrow"} />
             </button>

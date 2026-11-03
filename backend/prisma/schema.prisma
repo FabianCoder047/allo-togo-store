@@ -42,6 +42,7 @@ model User {
   updatedAt          DateTime  @updatedAt
 
   sessions                RefreshSession[]
+  passwordResetTokens     PasswordResetToken[]
   assignedOrders          Order[]                  @relation("OrderAssignedStaff")
   assignments             DeliveryAssignment[]     @relation("AssignmentStaff")
   assignmentsMade         DeliveryAssignment[]     @relation("AssignedBy")
@@ -71,6 +72,20 @@ model RefreshSession {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
   @@index([expiresAt])
 }
 
@@ -329,6 +344,9 @@ model OrderItem {
   productType   ProductType
   unitPrice     Int
   quantity      Int
+  cartonCount      Int       @default(0)
+  cartonQuantity   Int?
+  cartonUnitPrice  Int?
   lineTotal     Int
   specsSnapshot Json?
 

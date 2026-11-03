@@ -191,15 +191,26 @@ export const createOrderGroup = async (
   ip?: string,
   userAgent?: string,
 ) => {
-  const merged = new Map<string, number>()
+  const merged = new Map<
+    string,
+    { quantity: number; cartonCount: number }
+  >()
   for (const item of input.items) {
-    merged.set(
-      item.productId,
-      (merged.get(item.productId) ?? 0) + item.quantity,
-    )
+    const previous = merged.get(item.productId) ?? {
+      quantity: 0,
+      cartonCount: 0,
+    }
+    merged.set(item.productId, {
+      quantity: previous.quantity + item.quantity,
+      cartonCount: previous.cartonCount + item.cartonCount,
+    })
   }
-  if ([...merged.values()].some((quantity) => quantity > 99)) {
-    throw unprocessable("La quantité maximale par produit est de 99.")
+  if (
+    [...merged.values()].some(
+      (selection) => selection.quantity + selection.cartonCount > 99,
+    )
+  ) {
+    throw unprocessable("La quantité maximale par produit est de 99 unités ou cartons.")
   }
 
   const productIds = [...merged.keys()]
@@ -228,14 +239,34 @@ export const createOrderGroup = async (
         "Les services en pack font l’objet d’une demande de devis, pas d’une commande directe.",
       )
     }
-    if (!Number.isSafeInteger(product.price) || product.price <= 0) {
+    const selection = merged.get(product.id)!
+    if (
+      !Number.isSafeInteger(product.price) ||
+      (selection.quantity > 0 && product.price <= 0) ||
+      (selection.cartonCount === 0 && product.price <= 0)
+    ) {
       throw unprocessable(
         `Le prix du produit « ${product.name} » doit être confirmé par Allo Togo.`,
       )
     }
+    if (selection.cartonCount > 0) {
+      if (product.type !== "DRINK") {
+        throw unprocessable("Les cartons sont disponibles uniquement pour les boissons.")
+      }
+      if (
+        product.cartonPrice === null ||
+        product.cartonQuantity === null
+      ) {
+        throw unprocessable(
+          `Le prix ou le nombre de bouteilles par carton de « ${product.name} » n’est pas défini.`,
+        )
+      }
+    }
+    const totalBottleQuantity =
+      selection.quantity +
+      selection.cartonCount * (product.cartonQuantity ?? 0)
     if (product.manageStock && product.stock !== null) {
-      const quantity = merged.get(product.id) ?? 0
-      if (product.stock < quantity) {
+      if (product.stock < totalBottleQuantity) {
         throw conflict(
           `Stock insuffisant pour « ${product.name} » (${product.stock} restant).`,
         )
@@ -284,17 +315,36 @@ export const createOrderGroup = async (
 
     for (const [type, typeProducts] of groups.entries()) {
       const items = typeProducts.map((product) => {
-        const quantity = merged.get(product.id) ?? 0
+        const selection = merged.get(product.id)!
+        const { quantity, cartonCount } = selection
+        const totalBottleQuantity =
+          quantity + cartonCount * (product.cartonQuantity ?? 0)
         const unitPrice = priceForQuantity(
           product.price,
           product.wholesalePrices,
-          quantity,
+          totalBottleQuantity,
         )
+        const cartonUnitPrice =
+          cartonCount > 0 ? product.cartonPrice : null
+        const lineTotal =
+          unitPrice * quantity + (cartonUnitPrice ?? 0) * cartonCount
+        if (
+          !Number.isSafeInteger(lineTotal) ||
+          lineTotal > 2_147_483_647
+        ) {
+          throw unprocessable(
+            `Le montant de la ligne « ${product.name} » est trop élevé.`,
+          )
+        }
         return {
           product,
           quantity,
+          cartonCount,
+          cartonQuantity:
+            cartonCount > 0 ? product.cartonQuantity : null,
+          cartonUnitPrice,
           unitPrice,
-          lineTotal: unitPrice * quantity,
+          lineTotal,
         }
       })
       const subtotal = items.reduce((total, item) => total + item.lineTotal, 0)
@@ -341,6 +391,9 @@ export const createOrderGroup = async (
               productType: item.product.type,
               unitPrice: item.unitPrice,
               quantity: item.quantity,
+              cartonCount: item.cartonCount,
+              cartonQuantity: item.cartonQuantity,
+              cartonUnitPrice: item.cartonUnitPrice,
               lineTotal: item.lineTotal,
               specsSnapshot: item.product.specs ?? undefined,
             })),
@@ -394,9 +447,15 @@ export const createOrderGroup = async (
 
       for (const item of items) {
         if (item.product.manageStock && item.product.stock !== null) {
+          const inventoryQuantity =
+            item.quantity +
+            item.cartonCount * (item.product.cartonQuantity ?? 0)
           const updated = await tx.product.updateMany({
-            where: { id: item.product.id, stock: { gte: item.quantity } },
-            data: { stock: { decrement: item.quantity } },
+            where: {
+              id: item.product.id,
+              stock: { gte: inventoryQuantity },
+            },
+            data: { stock: { decrement: inventoryQuantity } },
           })
           if (updated.count === 0) {
             throw conflict(`Stock insuffisant pour « ${item.product.name} ».`)
@@ -405,7 +464,7 @@ export const createOrderGroup = async (
             data: {
               productId: item.product.id,
               type: "OUT",
-              quantity: -item.quantity,
+              quantity: -inventoryQuantity,
               reason: `Commande ${orderNumber}`,
             },
           })
@@ -674,15 +733,17 @@ const restoreOrderStock = async (
       where: { id: item.productId },
     })
     if (!product?.manageStock) continue
+    const inventoryQuantity =
+      item.quantity + item.cartonCount * (item.cartonQuantity ?? 0)
     await tx.product.update({
       where: { id: item.productId },
-      data: { stock: { increment: item.quantity } },
+      data: { stock: { increment: inventoryQuantity } },
     })
     await tx.inventoryMovement.create({
       data: {
         productId: item.productId,
         type: "IN",
-        quantity: item.quantity,
+        quantity: inventoryQuantity,
         reason: `Annulation ${order.orderNumber}`,
         actorId,
       },

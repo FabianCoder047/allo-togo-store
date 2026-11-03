@@ -2,7 +2,10 @@ import { Router } from "express"
 import { asyncHandler } from "../../lib/asyncHandler.js"
 import { validate } from "../../middleware/validate.js"
 import { requireAuth, requirePasswordChanged } from "../../middleware/auth.js"
-import { loginLimiter } from "../../middleware/rateLimit.js"
+import {
+  loginLimiter,
+  passwordResetLimiter,
+} from "../../middleware/rateLimit.js"
 import { prisma } from "../../db/prisma.js"
 import { env } from "../../config/env.js"
 import { notFound } from "../../lib/errors.js"
@@ -10,13 +13,17 @@ import {
   changePassword,
   login,
   logout,
+  requestPasswordReset,
+  resetPassword,
   refresh,
   updateProfile,
 } from "./service.js"
 import {
   changePasswordSchema,
+  confirmPasswordResetSchema,
   loginSchema,
   logoutSchema,
+  requestPasswordResetSchema,
   refreshSchema,
   updateProfileSchema,
 } from "./schemas.js"
@@ -43,6 +50,40 @@ const sessionCookieOptions = {
 }
 
 export const authRouter = Router()
+
+authRouter.post(
+  "/password-reset/request",
+  passwordResetLimiter,
+  validate({ body: requestPasswordResetSchema }),
+  asyncHandler(async (req, res) => {
+    await requestPasswordReset(req.body.email)
+    res.status(202).json({
+      data: {
+        message:
+          "Si cette adresse correspond à un compte actif, un lien de réinitialisation sera envoyé.",
+      },
+    })
+  }),
+)
+
+authRouter.post(
+  "/password-reset/confirm",
+  passwordResetLimiter,
+  validate({ body: confirmPasswordResetSchema }),
+  asyncHandler(async (req, res) => {
+    const userId = await resetPassword(req.body.token, req.body.newPassword)
+    await audit({
+      actorId: userId,
+      actorType: "STAFF",
+      action: "AUTH_PASSWORD_RESET",
+      entity: "User",
+      entityId: userId,
+      ip: req.ip,
+      userAgent: req.get("user-agent") ?? undefined,
+    })
+    res.status(204).send()
+  }),
+)
 
 authRouter.post(
   "/login",

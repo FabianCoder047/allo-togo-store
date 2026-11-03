@@ -46,3 +46,12 @@ export const changePasswordSchema = z.object({
     .regex(/[a-z]/, "Le mot de passe doit contenir une minuscule.")
     .regex(/[0-9]/, "Le mot de passe doit contenir un chiffre."),
 })
+
+export const requestPasswordResetSchema = z.object({
+  email: z.string().email().max(160),
+})
+
+export const confirmPasswordResetSchema = z.object({
+  token: z.string().min(20).max(200),
+  newPassword: changePasswordSchema.shape.newPassword,
+})

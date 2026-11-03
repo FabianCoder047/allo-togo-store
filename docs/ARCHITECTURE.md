@@ -536,7 +536,7 @@ La référence complète et les schémas sont dans **Swagger** : `http://localho
 | `TRACKING_LOOKUP_MAX_ATTEMPTS` | `10` | Seuil de tentatives |
 | `WHATSAPP_PROVIDER` | `simulated` | `simulated` ou `http` |
 | `WHATSAPP_SIMULATION` | `true` | Marque la simulation |
-| `EMAIL_PROVIDER` | `smtp` | `smtp`, `http` ou `google` (API Gmail OAuth) |
+| `EMAIL_PROVIDER` | `smtp` | `simulated` (développement), `smtp`, `http` ou `google` (API Gmail OAuth) |
 | `EMAIL_FROM` | `Allo Togo Store <no-reply@allotogo.test>` | Expéditeur des emails HTTP |
 | `GMAIL_CLIENT_ID` | — | ID du client OAuth Google |
 | `GMAIL_CLIENT_SECRET` | — | Secret du client OAuth Google |

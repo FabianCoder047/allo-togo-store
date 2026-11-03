@@ -201,6 +201,11 @@ intervenant) pour mettre à jour son prénom, son nom, son téléphone et son mo
 professionnel reste géré par le Directeur. Un changement de mot de passe déconnecte toutes les
 sessions et impose une reconnexion.
 
+Depuis l’écran de connexion, **Réinitialiser mon mot de passe** envoie un lien à usage unique à
+l’adresse professionnelle du compte. Le lien expire après 30 minutes ; le nouveau mot de passe doit
+contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre. En local, le message et
+son lien sont affichés dans la console du backend avec `EMAIL_PROVIDER=simulated`.
+
 En développement, `EMAIL_PROVIDER=simulated` journalise l’email dans la console du backend
 (`[EMAIL SIMULÉ] …`). Pour un envoi réel, configurer `EMAIL_PROVIDER=smtp` avec `MAIL_HOST`,
 `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` et `MAIL_FROM_NAME` (Gmail : mot de passe

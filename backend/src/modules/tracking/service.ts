@@ -69,6 +69,9 @@ export const publicTracking = async (code: string) => {
       productName: item.productName,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
+      cartonCount: item.cartonCount,
+      cartonQuantity: item.cartonQuantity,
+      cartonUnitPrice: item.cartonUnitPrice,
       lineTotal: item.lineTotal,
     })),
     timeline: order.history.map((entry) => ({

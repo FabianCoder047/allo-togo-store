@@ -43,7 +43,19 @@ export const openapi = {
         required: ["productId", "quantity"],
         properties: {
           productId: { type: "string" },
-          quantity: { type: "integer", minimum: 1, maximum: 99 },
+          quantity: {
+            type: "integer",
+            minimum: 0,
+            maximum: 99,
+            description: "Nombre de bouteilles vendues à l’unité.",
+          },
+          cartonCount: {
+            type: "integer",
+            minimum: 0,
+            maximum: 99,
+            description:
+              "Nombre de cartons, uniquement pour une boisson avec son tarif carton configuré.",
+          },
         },
       },
       Checkout: {
@@ -233,6 +245,27 @@ export const openapi = {
           },
         },
       },
+      PasswordResetRequestInput: {
+        type: "object",
+        required: ["email"],
+        properties: {
+          email: { type: "string", format: "email", maxLength: 160 },
+        },
+      },
+      PasswordResetConfirmInput: {
+        type: "object",
+        required: ["token", "newPassword"],
+        properties: {
+          token: { type: "string", minLength: 20, maxLength: 200 },
+          newPassword: {
+            type: "string",
+            minLength: 8,
+            maxLength: 200,
+            description:
+              "Avec au moins une majuscule, une minuscule et un chiffre.",
+          },
+        },
+      },
     },
   },
   paths: {
@@ -271,6 +304,48 @@ export const openapi = {
         responses: {
           "200": { description: "Jeton d’accès et cookie de rafraîchissement" },
           "401": { description: "Identifiants invalides" },
+        },
+      },
+    },
+    "/auth/password-reset/request": {
+      post: {
+        tags: ["Authentification"],
+        summary: "Demander un lien de réinitialisation",
+        description:
+          "La réponse ne révèle pas si l’adresse correspond à un compte actif.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/PasswordResetRequestInput",
+              },
+            },
+          },
+        },
+        responses: {
+          "202": { description: "Demande acceptée" },
+          "400": { description: "Adresse email invalide" },
+        },
+      },
+    },
+    "/auth/password-reset/confirm": {
+      post: {
+        tags: ["Authentification"],
+        summary: "Confirmer la réinitialisation du mot de passe",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/PasswordResetConfirmInput",
+              },
+            },
+          },
+        },
+        responses: {
+          "204": { description: "Mot de passe modifié et sessions révoquées" },
+          "400": { description: "Lien invalide ou mot de passe trop faible" },
         },
       },
     },
